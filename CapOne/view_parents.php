@@ -188,7 +188,7 @@ if (isset($_POST['update_submit'])) {
                 <a href="#completed" class="dropdown-item">Completed Vaccinations</a>
             </div>
         </div>
-        <a href="#sms"><i class="bi bi-chat-dots"></i> SMS Management</a>
+        <a href="sms.php"><i class="bi bi-chat-dots"></i> SMS Management</a>
         <a href="login_logs.php"><i class="bi bi-bar-chart"></i> Logs</a>
         <a href="logout.php"><i class="bi bi-box-arrow-right"></i> Logout</a>
     </div>
