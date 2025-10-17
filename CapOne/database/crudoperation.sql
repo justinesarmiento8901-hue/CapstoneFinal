@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Oct 11, 2025 at 12:16 PM
+-- Generation Time: Oct 16, 2025 at 03:35 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -47,7 +47,10 @@ CREATE TABLE `infantinfo` (
 --
 
 INSERT INTO `infantinfo` (`id`, `firstname`, `middlename`, `surname`, `dateofbirth`, `placeofbirth`, `sex`, `weight`, `height`, `bloodtype`, `nationality`, `parent_id`) VALUES
-(3, 'joan', 'matias', 'zoro', '2025-01-01', 'aliaga', 'M', 5, 40, 'AB+', 'Filipino', 1);
+(3, 'joan', 'matias', 'zoro', '2025-01-01', 'aliaga', 'M', 5, 40, 'AB+', 'Filipino', 1),
+(4, 'karl', 'Bayona', 'Untal', '2002-11-11', 'Cavite', 'M', 84, 77, 'B+', 'Filipino', 1),
+(5, 'Justine', 'matias', 'Sarmiento', '2002-11-11', 'bibiclat', 'M', 14, 34, 'B-', 'Filipino', 2),
+(6, 'angelo', 'M', 'magallanes', '2004-10-01', 'surigao', 'M', 42, 12, 'AB+', 'Filipino', 4);
 
 -- --------------------------------------------------------
 
@@ -136,7 +139,9 @@ INSERT INTO `logs_del_edit` (`id`, `action`, `user_ip`, `timestamp`) VALUES
 (11, 'Deleted parent record with ID 3', '::1', '2025-04-24 15:33:43'),
 (12, 'Updated parent record with ID 1', '::1', '2025-06-02 11:19:40'),
 (13, 'Updated parent record with ID 1', '::1', '2025-06-02 11:21:00'),
-(14, 'Updated parent record with ID 1', '::1', '2025-06-02 11:22:04');
+(14, 'Updated parent record with ID 1', '::1', '2025-06-02 11:22:04'),
+(15, 'SMS attempt to 09631982029: failed', '::1', '2025-10-15 14:11:58'),
+(16, 'SMS attempt to +639631982029: failed', '::1', '2025-10-15 14:13:48');
 
 -- --------------------------------------------------------
 
@@ -163,6 +168,104 @@ INSERT INTO `parents` (`id`, `first_name`, `last_name`, `email`, `phone`, `addre
 (1, 'Ruby', 'Catacutan', 'angelicacute@gmail.com', '09921435643', 'zone 2, Bibiclat, Aliaga, Nueva Ecija', '2025-04-24 05:26:52', '2025-06-02 03:19:40'),
 (2, 'Bianca', 'Umali', 'biancakes@gmail.com', '09923245453', 'zone 4, San Carlos, Aliaga, Nueva Ecija', '2025-04-24 05:29:42', '2025-04-24 05:29:42'),
 (4, 'liza', 'bombio', 'lizabombio@gmail.com', '09925094535', 'sto.rosario, aliaga nueva ecija', '2025-06-20 05:53:04', '2025-06-20 05:53:04');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `tbl_vaccination_details`
+--
+
+CREATE TABLE `tbl_vaccination_details` (
+  `id` int(11) NOT NULL,
+  `infant_id` int(11) NOT NULL,
+  `vaccine_name` varchar(255) NOT NULL,
+  `stage` varchar(20) NOT NULL,
+  `status` enum('Pending','Completed') NOT NULL DEFAULT 'Pending',
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `tbl_vaccination_details`
+--
+
+INSERT INTO `tbl_vaccination_details` (`id`, `infant_id`, `vaccine_name`, `stage`, `status`, `created_at`, `updated_at`) VALUES
+(1, 3, 'Pentavalent (1st dose)', '1½ mo', 'Completed', '2025-10-16 11:52:13', '2025-10-16 13:08:53'),
+(2, 4, 'Hepa B', 'Unknown', 'Pending', '2025-10-16 11:52:50', '2025-10-16 11:53:05'),
+(3, 4, 'BGC', 'Unknown', 'Pending', '2025-10-16 11:52:51', '2025-10-16 11:53:05'),
+(4, 3, 'BCG', 'Birth', 'Completed', '2025-10-16 11:53:07', '2025-10-16 12:14:17'),
+(5, 3, 'Pentavalent (2nd dose)', 'Unknown', 'Completed', '2025-10-16 13:10:10', '2025-10-16 13:10:43'),
+(6, 4, 'BCG', 'Unknown', 'Completed', '2025-10-16 13:13:27', '2025-10-16 13:32:50'),
+(7, 4, 'Pentavalent (1st dose)', 'Unknown', 'Completed', '2025-10-16 13:33:26', '2025-10-16 13:33:26');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `tbl_vaccination_schedule`
+--
+
+CREATE TABLE `tbl_vaccination_schedule` (
+  `vacc_id` int(11) NOT NULL,
+  `infant_id` int(11) NOT NULL,
+  `infant_name` varchar(100) DEFAULT NULL,
+  `vaccine_name` varchar(100) NOT NULL,
+  `stage` varchar(20) DEFAULT NULL,
+  `date_vaccination` date NOT NULL,
+  `next_dose_date` date DEFAULT NULL,
+  `status` enum('Pending','Completed') DEFAULT 'Pending',
+  `remarks` text DEFAULT NULL,
+  `date_created` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `tbl_vaccination_schedule`
+--
+
+INSERT INTO `tbl_vaccination_schedule` (`vacc_id`, `infant_id`, `infant_name`, `vaccine_name`, `stage`, `date_vaccination`, `next_dose_date`, `status`, `remarks`, `date_created`) VALUES
+(3, 3, NULL, 'BCG', 'Birth', '2025-10-16', '2025-11-16', 'Completed', 'try natin to baby', '2025-10-16 09:21:31'),
+(4, 3, NULL, 'Pentavalent (1st dose)', '1½ mo', '2025-10-16', '2025-10-16', 'Completed', 'well tignan natin', '2025-10-16 11:48:04'),
+(5, 3, NULL, 'Pentavalent (2nd dose)', NULL, '2025-01-02', '2025-02-02', 'Completed', 'yeas', '2025-10-16 13:09:42'),
+(6, 4, NULL, 'BCG', NULL, '1990-11-11', '1990-11-20', 'Completed', 'ag', '2025-10-16 13:13:16'),
+(7, 4, NULL, 'Pentavalent (1st dose)', NULL, '2020-11-11', '2021-11-12', 'Completed', 'ad', '2025-10-16 13:33:22');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `tbl_vaccine_reference`
+--
+
+CREATE TABLE `tbl_vaccine_reference` (
+  `id` int(11) NOT NULL,
+  `vaccine_name` varchar(100) DEFAULT NULL,
+  `disease_prevented` varchar(150) DEFAULT NULL,
+  `age_stage` varchar(20) DEFAULT NULL,
+  `at_birth` tinyint(1) DEFAULT 0,
+  `one_half_month` tinyint(1) DEFAULT 0,
+  `two_half_month` tinyint(1) DEFAULT 0,
+  `three_half_month` tinyint(1) DEFAULT 0,
+  `nine_month` tinyint(1) DEFAULT 0,
+  `one_year` tinyint(1) DEFAULT 0
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `tbl_vaccine_reference`
+--
+
+INSERT INTO `tbl_vaccine_reference` (`id`, `vaccine_name`, `disease_prevented`, `age_stage`, `at_birth`, `one_half_month`, `two_half_month`, `three_half_month`, `nine_month`, `one_year`) VALUES
+(1, 'BCG', 'Tuberculosis', 'Birth', 0, 0, 0, 0, 0, 0),
+(2, 'Hepatitis B (HepB)', 'Hepatitis B', 'Birth', 0, 0, 0, 0, 0, 0),
+(3, 'Pentavalent (1st dose)', 'Diphtheria, Pertussis, Tetanus, Hepatitis B, Haemophilus influenzae type B', '1½ mo', 0, 0, 0, 0, 0, 0),
+(4, 'Oral Polio Vaccine (1st dose)', 'Poliomyelitis', '1½ mo', 0, 0, 0, 0, 0, 0),
+(5, 'Pneumococcal Conjugate Vaccine (1st dose)', 'Pneumonia, Meningitis, Otitis Media', '1½ mo', 0, 0, 0, 0, 0, 0),
+(6, 'Pentavalent (2nd dose)', 'Diphtheria, Pertussis, Tetanus, Hepatitis B, Haemophilus influenzae type B', '2½ mo', 0, 0, 0, 0, 0, 0),
+(7, 'Oral Polio Vaccine (2nd dose)', 'Poliomyelitis', '2½ mo', 0, 0, 0, 0, 0, 0),
+(8, 'Pneumococcal Conjugate Vaccine (2nd dose)', 'Pneumonia, Meningitis, Otitis Media', '2½ mo', 0, 0, 0, 0, 0, 0),
+(9, 'Pentavalent (3rd dose)', 'Diphtheria, Pertussis, Tetanus, Hepatitis B, Haemophilus influenzae type B', '3½ mo', 0, 0, 0, 0, 0, 0),
+(10, 'Oral Polio Vaccine (3rd dose)', 'Poliomyelitis', '3½ mo', 0, 0, 0, 0, 0, 0),
+(11, 'Inactivated Polio Vaccine (1 dose)', 'Poliomyelitis', '3½ mo', 0, 0, 0, 0, 0, 0),
+(12, 'Pneumococcal Conjugate Vaccine (3rd dose)', 'Pneumonia, Meningitis, Otitis Media', '3½ mo', 0, 0, 0, 0, 0, 0),
+(13, 'Measles, Mumps, Rubella (MMR 1st dose)', 'Measles, Mumps, Rubella', '9 mo', 0, 0, 0, 0, 0, 0),
+(14, 'Measles, Mumps, Rubella (MMR 2nd dose)', 'Measles, Mumps, Rubella', '1 yr', 0, 0, 0, 0, 0, 0);
 
 -- --------------------------------------------------------
 
@@ -243,7 +346,16 @@ INSERT INTO `user_logins` (`id`, `user_id`, `email`, `ip_address`, `success`, `r
 (29, 1, 'admin@gmail.com', '::1', 1, 'Login successful', '2025-07-14 14:06:32'),
 (30, NULL, 'fffffffffffffffffffffff@gmail.com', '::1', 0, 'User not found', '2025-10-11 15:47:20'),
 (31, NULL, '2114141@gmail.com', '::1', 0, 'User not found', '2025-10-11 15:49:01'),
-(32, 1, 'admin@gmail.com', '::1', 1, 'Login successful', '2025-10-11 15:50:14');
+(32, 1, 'admin@gmail.com', '::1', 1, 'Login successful', '2025-10-11 15:50:14'),
+(33, 1, 'admin@gmail.com', '::1', 1, 'Login successful', '2025-10-15 13:46:50'),
+(34, 1, 'admin@gmail.com', '::1', 1, 'Login successful', '2025-10-15 14:17:37'),
+(35, 2, 'healthworker@gmail.com', '::1', 1, 'Login successful', '2025-10-15 14:17:46'),
+(36, 1, 'admin@gmail.com', '::1', 1, 'Login successful', '2025-10-15 14:19:12'),
+(37, 3, 'angelicacute@gmail.com', '::1', 1, 'Login successful', '2025-10-15 14:19:36'),
+(38, 1, 'admin@gmail.com', '::1', 1, 'Login successful', '2025-10-15 14:23:41'),
+(39, 1, 'admin@gmail.com', '::1', 1, 'Login successful', '2025-10-15 15:03:18'),
+(40, 1, 'admin@gmail.com', '::1', 1, 'Login successful', '2025-10-15 20:55:54'),
+(41, 1, 'admin@gmail.com', '::1', 1, 'Login successful', '2025-10-16 20:00:21');
 
 --
 -- Indexes for dumped tables
@@ -281,6 +393,26 @@ ALTER TABLE `parents`
   ADD PRIMARY KEY (`id`);
 
 --
+-- Indexes for table `tbl_vaccination_details`
+--
+ALTER TABLE `tbl_vaccination_details`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `infant_id` (`infant_id`);
+
+--
+-- Indexes for table `tbl_vaccination_schedule`
+--
+ALTER TABLE `tbl_vaccination_schedule`
+  ADD PRIMARY KEY (`vacc_id`),
+  ADD KEY `infant_id` (`infant_id`);
+
+--
+-- Indexes for table `tbl_vaccine_reference`
+--
+ALTER TABLE `tbl_vaccine_reference`
+  ADD PRIMARY KEY (`id`);
+
+--
 -- Indexes for table `users`
 --
 ALTER TABLE `users`
@@ -300,7 +432,7 @@ ALTER TABLE `user_logins`
 -- AUTO_INCREMENT for table `infantinfo`
 --
 ALTER TABLE `infantinfo`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- AUTO_INCREMENT for table `laboratory`
@@ -318,13 +450,31 @@ ALTER TABLE `login_attempts`
 -- AUTO_INCREMENT for table `logs_del_edit`
 --
 ALTER TABLE `logs_del_edit`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=17;
 
 --
 -- AUTO_INCREMENT for table `parents`
 --
 ALTER TABLE `parents`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+
+--
+-- AUTO_INCREMENT for table `tbl_vaccination_details`
+--
+ALTER TABLE `tbl_vaccination_details`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
+
+--
+-- AUTO_INCREMENT for table `tbl_vaccination_schedule`
+--
+ALTER TABLE `tbl_vaccination_schedule`
+  MODIFY `vacc_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
+
+--
+-- AUTO_INCREMENT for table `tbl_vaccine_reference`
+--
+ALTER TABLE `tbl_vaccine_reference`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
 
 --
 -- AUTO_INCREMENT for table `users`
@@ -336,7 +486,7 @@ ALTER TABLE `users`
 -- AUTO_INCREMENT for table `user_logins`
 --
 ALTER TABLE `user_logins`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=33;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=42;
 
 --
 -- Constraints for dumped tables
@@ -347,6 +497,18 @@ ALTER TABLE `user_logins`
 --
 ALTER TABLE `infantinfo`
   ADD CONSTRAINT `fk_child_parent` FOREIGN KEY (`parent_id`) REFERENCES `parents` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `tbl_vaccination_details`
+--
+ALTER TABLE `tbl_vaccination_details`
+  ADD CONSTRAINT `tbl_vaccination_details_ibfk_1` FOREIGN KEY (`infant_id`) REFERENCES `infantinfo` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `tbl_vaccination_schedule`
+--
+ALTER TABLE `tbl_vaccination_schedule`
+  ADD CONSTRAINT `tbl_vaccination_schedule_ibfk_1` FOREIGN KEY (`infant_id`) REFERENCES `infantinfo` (`id`) ON DELETE CASCADE;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
