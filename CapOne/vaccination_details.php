@@ -28,17 +28,38 @@ if (!$infant) exit("<script>alert('Infant not found'); window.location.href='vac
 $refResult = $con->query("SELECT * FROM tbl_vaccine_reference ORDER BY 
     FIELD(age_stage,'Birth','1½ mo','2½ mo','3½ mo','9 mo','1 yr'), id ASC");
 $vaccine_reference = [];
-while ($row = $refResult->fetch_assoc()) $vaccine_reference[] = $row;
-
-// 4. Fetch vaccination status from tbl_vaccination_details
-$status_map = [];
-$sched = $con->prepare("SELECT vaccine_name, stage, status FROM tbl_vaccination_details WHERE infant_id=?");
-$sched->bind_param("i", $infant_id);
-$sched->execute();
-$res = $sched->get_result();
-while ($r = $res->fetch_assoc()) {
-    $status_map[$r['vaccine_name']][$r['stage']] = $r['status'] ?? 'Pending';
+$referenceStageMap = [];
+while ($row = $refResult->fetch_assoc()) {
+    $vaccine_reference[] = $row;
+    $vaccineName = $row['vaccine_name'] ?? '';
+    $ageStage = $row['age_stage'] ?? '';
+    if ($vaccineName !== '' && $ageStage !== '') {
+        $status_map[$vaccineName][$ageStage] = 'N/A';
+        $referenceStageMap[$vaccineName] = $ageStage;
+    }
 }
+
+// 4. Fetch vaccination status from tbl_vaccination_schedule
+$schedStmt = $con->prepare("SELECT vaccine_name, stage, status FROM tbl_vaccination_schedule WHERE infant_id=?");
+$schedStmt->bind_param("i", $infant_id);
+$schedStmt->execute();
+$scheduleResult = $schedStmt->get_result();
+while ($row = $scheduleResult->fetch_assoc()) {
+    $vaccineName = $row['vaccine_name'] ?? '';
+    if ($vaccineName === '') {
+        continue;
+    }
+    $stage = $row['stage'] ?? '';
+    if ($stage === '' || $stage === null) {
+        $stage = $referenceStageMap[$vaccineName] ?? '';
+    }
+    if ($stage === '') {
+        continue;
+    }
+    $statusValue = ($row['status'] === 'Completed') ? 'Completed' : 'Pending';
+    $status_map[$vaccineName][$stage] = $statusValue;
+}
+$schedStmt->close();
 
 // 5. Define stages
 $stages = [
@@ -107,7 +128,7 @@ $stages = [
         $completed_count = 0;
         foreach ($vaccine_reference as $vaccine) {
             $stage = $vaccine['age_stage'];
-            $status = $status_map[$vaccine['vaccine_name']][$stage] ?? 'Pending';
+            $status = $status_map[$vaccine['vaccine_name']][$stage] ?? 'N/A';
             if ($status === 'Completed') $completed_count++;
         }
         $progress_percent = $total_vaccines > 0 ? round(($completed_count / $total_vaccines) * 100) : 0;
@@ -141,9 +162,17 @@ $stages = [
                             <?php
                             foreach ($stages as $db_stage => $label):
                                 if ($vaccine['age_stage'] === $db_stage):
-                                    $status = $status_map[$vaccine['vaccine_name']][$db_stage] ?? 'Pending';
-                                    $badgeClass = ($status === 'Completed') ? 'bg-success' : 'bg-warning text-dark';
-                                    echo "<td><span class='badge $badgeClass badge-status'>$status</span></td>";
+                                    $status = $status_map[$vaccine['vaccine_name']][$db_stage] ?? 'N/A';
+                                    if ($status === 'Completed') {
+                                        $badgeClass = 'bg-success';
+                                    } elseif ($status === 'Pending') {
+                                        $badgeClass = 'bg-warning text-dark';
+                                    } else {
+                                        $status = 'N/A';
+                                        $badgeClass = 'bg-secondary';
+                                    }
+                                    $displayStatus = htmlspecialchars($status);
+                                    echo "<td><span class='badge $badgeClass badge-status'>$displayStatus</span></td>";
                                 else:
                                     echo "<td class='bg-light text-muted'>—</td>";
                                 endif;

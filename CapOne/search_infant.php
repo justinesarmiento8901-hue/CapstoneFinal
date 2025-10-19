@@ -17,32 +17,36 @@ $sql = "SELECT * FROM infantinfo WHERE
 $result = mysqli_query($con, $sql);
 $output = "";
 
-if (mysqli_num_rows($result) > 0) {
+if ($result && mysqli_num_rows($result) > 0) {
     while ($row = mysqli_fetch_assoc($result)) {
-        $output .= "<tr>
-            <td>{$row['id']}</td>
-            <td>{$row['firstname']}</td>
-            <td>{$row['middlename']}</td>
-            <td>{$row['surname']}</td>
-            <td>{$row['dateofbirth']}</td>
-            <td>{$row['placeofbirth']}</td>
-            <td>{$row['sex']}</td>
-            <td>{$row['weight']}</td>
-            <td>{$row['height']}</td>
-            <td>{$row['bloodtype']}</td>
-            <td>{$row['nationality']}</td>
-            <td>";
+        $id = (int) $row['id'];
+        $firstName = $row['firstname'] ?? '';
+        $middleName = $row['middlename'] ?? '';
+        $lastName = $row['surname'] ?? '';
+        $fullName = trim(preg_replace('/\s+/', ' ', $firstName . ' ' . $middleName . ' ' . $lastName));
+
+        $output .= '<tr>';
+        $output .= '<th scope="row">' . htmlspecialchars((string) $id, ENT_QUOTES, 'UTF-8') . '</th>';
+        $output .= '<td>' . htmlspecialchars($fullName, ENT_QUOTES, 'UTF-8') . '</td>';
+        $output .= '<td>' . htmlspecialchars($row['dateofbirth'] ?? '', ENT_QUOTES, 'UTF-8') . '</td>';
+        $output .= '<td>' . htmlspecialchars($row['placeofbirth'] ?? '', ENT_QUOTES, 'UTF-8') . '</td>';
+        $output .= '<td>' . htmlspecialchars($row['sex'] ?? '', ENT_QUOTES, 'UTF-8') . '</td>';
+        $output .= '<td>' . htmlspecialchars($row['weight'] ?? '', ENT_QUOTES, 'UTF-8') . '</td>';
+        $output .= '<td>' . htmlspecialchars($row['height'] ?? '', ENT_QUOTES, 'UTF-8') . '</td>';
+        $output .= '<td>' . htmlspecialchars($row['bloodtype'] ?? '', ENT_QUOTES, 'UTF-8') . '</td>';
+        $output .= '<td>' . htmlspecialchars($row['nationality'] ?? '', ENT_QUOTES, 'UTF-8') . '</td>';
+        $output .= '<td class="d-flex gap-1 justify-content-center">';
         if ($showEditButton) {
-            $output .= "<button class='btn btn-success btn-sm' onclick='confirmEdit({$row['id']})'>Edit</button>";
+            $output .= '<button class="btn btn-outline-success btn-sm" onclick="confirmEdit(' . $id . ')" title="Edit"><i class="bi bi-pencil-square"></i></button>';
         }
         if ($showDeleteButton) {
-            $output .= "<a href='#' class='btn btn-danger btn-sm' onclick='confirmDelete({$row['id']})'>Delete</a>";
+            $output .= '<button class="btn btn-outline-danger btn-sm" onclick="confirmDelete(' . $id . ')" title="Delete"><i class="bi bi-trash"></i></button>';
         }
-        $output .= "</td>
-        </tr>";
+        $output .= '</td>';
+        $output .= '</tr>';
     }
 } else {
-    $output = "<tr><td colspan='12'>No records found.</td></tr>";
+    $output = "<tr><td colspan='10' class='text-center'>No records found.</td></tr>";
 }
 
 echo $output;

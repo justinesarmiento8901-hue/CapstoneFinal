@@ -1,6 +1,42 @@
 <?php
 include 'dbForm.php';
 
+function formatDateDisplay($date)
+{
+    if (!$date) {
+        return 'N/A';
+    }
+    $timestamp = strtotime($date);
+    if ($timestamp === false) {
+        return htmlspecialchars($date);
+    }
+    return htmlspecialchars(date('Y-m-d', $timestamp));
+}
+
+function formatNextDoseDisplay($date)
+{
+    if (!$date) {
+        return 'N/A';
+    }
+    $timestamp = strtotime($date);
+    if ($timestamp === false) {
+        return htmlspecialchars($date);
+    }
+    return htmlspecialchars(date('Y-m-d', $timestamp));
+}
+
+function formatTimeDisplay($time)
+{
+    if (!$time) {
+        return 'N/A';
+    }
+    $timestamp = strtotime($time);
+    if ($timestamp === false) {
+        return htmlspecialchars($time);
+    }
+    return date('g:i A', $timestamp);
+}
+
 $sql = "SELECT 
             v.vacc_id,
             v.infant_id,
@@ -10,6 +46,7 @@ $sql = "SELECT
             v.vaccine_name,
             v.date_vaccination,
             v.next_dose_date,
+            v.time,
             v.status,
             v.remarks
         FROM tbl_vaccination_schedule v
@@ -35,22 +72,32 @@ if ($res) {
         $parentEsc = htmlspecialchars($first_vaccine['parent_name']);
 
         // Add infant header row
+        $firstTime = formatTimeDisplay($first_vaccine['time']);
+        $firstDate = formatDateDisplay($first_vaccine['date_vaccination']);
+        $firstNextDose = formatNextDoseDisplay($first_vaccine['next_dose_date']);
+        $firstVaccineName = htmlspecialchars($first_vaccine['vaccine_name']);
+        $firstRemarks = htmlspecialchars($first_vaccine['remarks']);
+        $contactEsc = htmlspecialchars($first_vaccine['parent_contact']);
+
         $rows .= "<tr class='infant-group-header'>
             <td rowspan='" . count($vaccines) . "'>{$count}</td>
             <td rowspan='" . count($vaccines) . "'><a href='#' class='infantLink' data-id='{$infant_id}'>{$infantEsc}</a></td>
             <td rowspan='" . count($vaccines) . "'>{$parentEsc}</td>
-            <td rowspan='" . count($vaccines) . "'>{$first_vaccine['parent_contact']}</td>
-            <td>{$first_vaccine['vaccine_name']}</td>
-            <td>{$first_vaccine['date_vaccination']}</td>
-            <td>{$first_vaccine['next_dose_date']}</td>
+            <td rowspan='" . count($vaccines) . "'>{$contactEsc}</td>
+            <td>{$firstDate}</td>
+            <td>{$firstVaccineName}</td>
+            <td>{$firstNextDose}</td>
+            <td>{$firstTime}</td>
             <td class='text-center'>
                 <input type='checkbox' class='form-check-input statusCheckbox' data-id='{$first_vaccine['vacc_id']}' " . (($first_vaccine['status'] === 'Completed') ? 'checked' : '') . ">
                 <div style='margin-top:4px'>" . (($first_vaccine['status'] === 'Completed') ? "<span class='badge bg-success'>Completed</span>" : "<span class='badge bg-warning'>Pending</span>") . "</div>
             </td>
-            <td>" . htmlspecialchars($first_vaccine['remarks']) . "</td>
+            <td>{$firstRemarks}</td>
             <td class='text-center'>
-                <button class='btn btn-sm btn-warning editBtn' data-id='{$first_vaccine['vacc_id']}'>Edit</button>
-                <button class='btn btn-sm btn-danger deleteBtn' data-id='{$first_vaccine['vacc_id']}'>Delete</button>
+                <div class='d-flex gap-1 justify-content-center'>
+                    <button class='btn btn-outline-success btn-sm editBtn' data-id='{$first_vaccine['vacc_id']}' title='Edit'><i class='bi bi-pencil-square'></i></button>
+                    <button class='btn btn-outline-danger btn-sm deleteBtn' data-id='{$first_vaccine['vacc_id']}' title='Delete'><i class='bi bi-trash'></i></button>
+                </div>
             </td>
         </tr>";
 
@@ -63,17 +110,20 @@ if ($res) {
             $checked = ($vaccine['status'] === 'Completed') ? 'checked' : '';
 
             $rows .= "<tr class='vaccine-row'>
+                <td>" . formatDateDisplay($vaccine['date_vaccination']) . "</td>
                 <td>{$vaccineEsc}</td>
-                <td>{$vaccine['date_vaccination']}</td>
-                <td>{$vaccine['next_dose_date']}</td>
+                <td>" . formatNextDoseDisplay($vaccine['next_dose_date']) . "</td>
+                <td>" . formatTimeDisplay($vaccine['time']) . "</td>
                 <td class='text-center'>
                     <input type='checkbox' class='form-check-input statusCheckbox' data-id='{$vaccine['vacc_id']}' {$checked}>
                     <div style='margin-top:4px'>{$statusBadge}</div>
                 </td>
                 <td>{$remarksEsc}</td>
                 <td class='text-center'>
-                    <button class='btn btn-sm btn-warning editBtn' data-id='{$vaccine['vacc_id']}'>Edit</button>
-                    <button class='btn btn-sm btn-danger deleteBtn' data-id='{$vaccine['vacc_id']}'>Delete</button>
+                    <div class='d-flex gap-1 justify-content-center'>
+                        <button class='btn btn-outline-success btn-sm editBtn' data-id='{$vaccine['vacc_id']}' title='Edit'><i class='bi bi-pencil-square'></i></button>
+                        <button class='btn btn-outline-danger btn-sm deleteBtn' data-id='{$vaccine['vacc_id']}' title='Delete'><i class='bi bi-trash'></i></button>
+                    </div>
                 </td>
             </tr>";
         }

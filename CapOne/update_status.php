@@ -1,5 +1,6 @@
 <?php
 include 'dbForm.php';
+require_once 'sms_queue_helpers.php';
 
 if (!isset($_POST['vacc_id'], $_POST['status'])) {
     echo "Missing parameters";
@@ -15,7 +16,7 @@ $update_sched->bind_param("si", $status, $vacc_id);
 $update_sched->execute();
 
 // 2️⃣ Fetch infant_id, vaccine_name, stage
-$get_info = $con->prepare("SELECT infant_id, vaccine_name, stage FROM tbl_vaccination_schedule WHERE vacc_id=? LIMIT 1");
+$get_info = $con->prepare("SELECT infant_id, vaccine_name, stage, barangay FROM tbl_vaccination_schedule WHERE vacc_id=? LIMIT 1");
 $get_info->bind_param("i", $vacc_id);
 $get_info->execute();
 $info = $get_info->get_result()->fetch_assoc();
@@ -28,6 +29,7 @@ if (!$info) {
 $infant_id = $info['infant_id'];
 $vaccine_name = $info['vaccine_name'];
 $stage = $info['stage'];
+$barangay = $info['barangay'] ?? '';
 
 // 3️⃣ If stage is NULL or empty, try to get it from vaccine reference
 if (empty($stage)) {
@@ -71,11 +73,18 @@ if ($exists && $detail_id) {
     $update_det = $con->prepare("UPDATE tbl_vaccination_details SET status=?, updated_at=NOW() WHERE id=?");
     $update_det->bind_param("si", $status, $detail_id);
     $update_det->execute();
+    $update_det->close();
 } else {
     // Insert new record
     $insert_det = $con->prepare("INSERT INTO tbl_vaccination_details (infant_id,vaccine_name,stage,status) VALUES (?,?,?,?)");
     $insert_det->bind_param("isss", $infant_id, $vaccine_name, $stage, $status);
     $insert_det->execute();
+}
+
+if ($status === 'Completed') {
+    removeFromSmsQueue($con, $vacc_id);
+} else {
+    syncSmsQueue($con, $vacc_id, $infant_id, null, $barangay);
 }
 
 echo "ok";

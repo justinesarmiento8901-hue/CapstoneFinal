@@ -14,152 +14,179 @@ if (!isset($_SESSION['user'])) {
     <title>SMS Management</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
-    <style>
-        body {
-            display: flex;
-            min-height: 100vh;
-        }
-
-        .sidebar {
-            width: 250px;
-            background-color: #0056b3;
-            color: #fff;
-            padding: 20px;
-            transition: all 0.3s ease;
-        }
-
-        .sidebar a {
-            color: #fff;
-            text-decoration: none;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 12px 15px;
-            border-radius: 5px;
-            margin-bottom: 8px;
-            transition: background 0.3s ease;
-        }
-
-        .sidebar a:hover,
-        .sidebar a.active {
-            background-color: #004494;
-        }
-
-        .dropdown-menu {
-            background-color: #004494;
-            border: none;
-        }
-
-        .dropdown-menu a {
-            color: #fff;
-            padding-left: 30px;
-        }
-
-        .content {
-            flex-grow: 1;
-            padding: 20px;
-        }
-
-        .toggle-btn {
-            display: none;
-            background-color: #004494;
-            color: #fff;
-            border: none;
-            padding: 10px 15px;
-            cursor: pointer;
-            width: 100%;
-            text-align: left;
-        }
-
-        .card {
-            border-radius: 15px;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-            max-width: 640px;
-            margin: 0 auto;
-        }
-
-        .help-text {
-            font-size: 0.9rem;
-            color: #6c757d;
-        }
-
-        @media (max-width: 768px) {
-            .sidebar {
-                width: 100%;
-                display: none;
-            }
-
-            .sidebar.active {
-                display: block;
-            }
-
-            .toggle-btn {
-                display: block;
-            }
-        }
-    </style>
+    <link rel="stylesheet" href="assets/css/theme.css">
 </head>
 
 <body>
     <!-- Sidebar Menu -->
-    <button class="toggle-btn" onclick="toggleSidebar()"><i class="bi bi-list"></i> Menu</button>
+    <button class="toggle-btn" id="sidebarToggle"><i class="bi bi-list"></i> Menu</button>
     <div class="sidebar" id="sidebar">
         <h4 class="mb-4"><i class="bi bi-baby"></i> Infant Record System</h4>
+        <?php $role = $_SESSION['user']['role'] ?? ''; ?>
         <a href="dashboard.php"><i class="bi bi-speedometer2"></i> Dashboard</a>
-        <a href="addinfant.php"><i class="bi bi-person"></i> Add Infant</a>
-        <a href="add_parents.php"><i class="bi bi-person-plus"></i> Add Parent</a>
-        <a href="viewinfant.php"><i class="bi bi-book"></i> Infant Records</a>
-        <a href="view_parents.php"><i class="bi bi-book"></i> Parent Records</a>
-        <div class="dropdown">
-            <a href="#" class="dropdown-toggle" data-bs-toggle="dropdown"><i class="bi bi-syringe"></i> Vaccination Schedule</a>
-            <div class="dropdown-menu">
-                <a href="#upcoming" class="dropdown-item">Upcoming Vaccinations</a>
-                <a href="#completed" class="dropdown-item">Completed Vaccinations</a>
-            </div>
-        </div>
-        <a href="sms.php" class="active"><i class="bi bi-chat-dots"></i> SMS Management</a>
-        <a href="login_logs.php"><i class="bi bi-bar-chart"></i> Logs</a>
+        <a href="addinfant.php"><i class="bi bi-person-fill-add"></i> Add Infant</a>
+        <?php if ($role === 'admin' || $role === 'healthworker'): ?>
+            <a href="add_parents.php"><i class="bi bi-person-plus"></i> Add Parent</a>
+        <?php endif; ?>
+        <a href="viewinfant.php"><i class="bi bi-journal-medical"></i> Infant Records</a>
+        <a href="view_parents.php"><i class="bi bi-people"></i> Parent Records</a>
+        <a href="account_settings.php"><i class="bi bi-gear"></i> Account Settings</a>
+        <?php if ($role !== 'parent'): ?>
+            <a href="vaccination_schedule.php"><i class="bi bi-journal-medical"></i> Vaccination Schedule</a>
+            <a href="sms.php" class="active"><i class="bi bi-chat-dots"></i> SMS Management</a>
+            <a href="login_logs.php"><i class="bi bi-clipboard-data"></i> Logs</a>
+        <?php endif; ?>
         <a href="logout.php"><i class="bi bi-box-arrow-right"></i> Logout</a>
     </div>
 
-    <div class="content">
-        <div class="container mt-4">
-            <div class="card p-4 shadow-sm">
-                <h3 class="mb-3"><i class="bi bi-chat-dots"></i> Send SMS</h3>
-                <form id="messageForm">
-                    <div class="mb-3">
-                        <label for="number" class="form-label">Phone Number</label>
-                        <input type="tel" class="form-control" id="number" placeholder="09XXXXXXXXX or +63XXXXXXXXXX" required>
-                        <div class="help-text">Use PH format 09XXXXXXXXX or +63XXXXXXXXXX.</div>
+    <div class="content-area">
+        <div class="container-fluid mt-4">
+            <div class="row g-4">
+                <div class="col-lg-6">
+                    <div class="card card-shadow p-4 h-100">
+                        <h3 class="dashboard-title mb-4"><i class="bi bi-chat-dots"></i>Send SMS</h3>
+                        <form id="messageForm" class="row g-3">
+                            <div class="col-12">
+                                <label for="number" class="form-label">Phone Number</label>
+                                <input type="tel" class="form-control" id="number" placeholder="09XXXXXXXXX or +63XXXXXXXXXX" required>
+                                <div class="form-help">Use PH format 09XXXXXXXXX or +63XXXXXXXXXX.</div>
+                            </div>
+                            <div class="col-12">
+                                <label for="message" class="form-label">Message</label>
+                                <textarea class="form-control" id="message" rows="4" maxlength="765" placeholder="Type your message..." required></textarea>
+                                <div class="form-text"><span id="charCount">0</span>/765</div>
+                            </div>
+                            <div class="col-12 d-flex gap-2 justify-content-end">
+                                <button type="reset" class="btn btn-outline-danger"><i class="bi bi-eraser"></i>Clear</button>
+                                <button type="submit" class="btn btn-outline-primary"><i class="bi bi-send"></i>Send</button>
+                            </div>
+                        </form>
+                        <div class="mt-3" id="result" style="display:none;"></div>
                     </div>
-                    <div class="mb-3">
-                        <label for="message" class="form-label">Message</label>
-                        <textarea class="form-control" id="message" rows="4" maxlength="765" placeholder="Type your message..." required></textarea>
-                        <div class="form-text"><span id="charCount">0</span>/765</div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="card card-shadow p-4 h-100">
+                        <div class="d-flex flex-column flex-lg-row align-items-lg-center justify-content-lg-between gap-2 mb-3">
+                            <h3 class="dashboard-title mb-0"><i class="bi bi-list-ul"></i>Scheduled SMS Queue</h3>
+                            <button type="button" class="btn btn-outline-success" id="sendBulkBtn" disabled><i class="bi bi-send-check"></i>Send Bulk Message</button>
+                        </div>
+                        <div id="bulkResult" class="mb-3" style="display:none;"></div>
+                        <div class="table-modern">
+                            <table class="table table-hover align-middle" id="smsQueueTable">
+                                <thead>
+                                    <tr>
+                                        <th>Infant</th>
+                                        <th>Phone</th>
+                                        <th>Barangay</th>
+                                        <th>Next Dose Date</th>
+                                        <th>Time</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="smsQueueBody"></tbody>
+                            </table>
+                        </div>
                     </div>
-                    <div class="d-flex gap-2">
-                        <button type="submit" class="btn btn-primary"><i class="bi bi-send"></i> Send</button>
-                        <button type="reset" class="btn btn-secondary">Clear</button>
-                    </div>
-                </form>
-                <div class="mt-3" id="result" style="display:none;"></div>
+                </div>
             </div>
         </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="assets/js/theme.js"></script>
     <script>
-        function toggleSidebar() {
-            var sidebar = document.getElementById('sidebar');
-            sidebar.classList.toggle('active');
-        }
         const messageInput = document.getElementById('message');
         const charCount = document.getElementById('charCount');
         messageInput.addEventListener('input', function() {
             charCount.textContent = this.value.length;
         });
+
+        const queueBody = document.getElementById('smsQueueBody');
+        const sendBulkBtn = document.getElementById('sendBulkBtn');
+        const bulkResult = document.getElementById('bulkResult');
+
+        function updateBulkResult(type, message) {
+            if (!bulkResult) return;
+            bulkResult.style.display = 'block';
+            bulkResult.className = `alert alert-${type}`;
+            bulkResult.textContent = message;
+        }
+
+        function renderQueue(rows) {
+            queueBody.innerHTML = '';
+            if (!rows || rows.length === 0) {
+                queueBody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">No schedules queued.</td></tr>';
+                sendBulkBtn.disabled = true;
+                return;
+            }
+
+            rows.forEach(function(row) {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${row.infant_name ? row.infant_name : 'N/A'}</td>
+                    <td>${row.phone}</td>
+                    <td>${row.barangay || 'N/A'}</td>
+                    <td>${row.next_dose_date || 'N/A'}</td>
+                    <td>${row.schedule_time ? formatTime(row.schedule_time) : 'N/A'}</td>
+                `;
+                queueBody.appendChild(tr);
+            });
+            sendBulkBtn.disabled = false;
+        }
+
+        function formatTime(timeStr) {
+            if (!timeStr) return 'N/A';
+            const [hour, minute] = timeStr.split(':');
+            if (hour === undefined) return timeStr;
+            let h = parseInt(hour, 10);
+            const m = minute ? minute.substring(0, 2) : '00';
+            const period = h >= 12 ? 'PM' : 'AM';
+            h = h % 12 || 12;
+            return `${h}:${m} ${period}`;
+        }
+
+        function loadQueue() {
+            fetch('fetch_sms_queue.php')
+                .then(function(res) { return res.json(); })
+                .then(function(rows) {
+                    renderQueue(Array.isArray(rows) ? rows : []);
+                })
+                .catch(function(err) {
+                    console.error('Failed to load SMS queue', err);
+                    updateBulkResult('danger', 'Failed to load SMS queue');
+                });
+        }
+
+        sendBulkBtn.addEventListener('click', function() {
+            sendBulkBtn.disabled = true;
+            updateBulkResult('info', 'Sending messages...');
+
+            fetch('send_bulk_sms.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({})
+            })
+                .then(function(res) { return res.json(); })
+                .then(function(response) {
+                    if (response && response.success) {
+                        updateBulkResult('success', response.message || 'Messages sent successfully.');
+                        loadQueue();
+                    } else {
+                        const message = response && response.error ? response.error : 'Failed to send bulk messages.';
+                        updateBulkResult('danger', message);
+                        sendBulkBtn.disabled = false;
+                    }
+                })
+                .catch(function(err) {
+                    console.error('Bulk send error', err);
+                    updateBulkResult('danger', 'Bulk send failed.');
+                    sendBulkBtn.disabled = false;
+                });
+        });
+
+        loadQueue();
     </script>
-    <!-- apiKey.js omitted since API key input removed and key must be pre-saved -->
     <script src="script.js"></script>
 </body>
 

@@ -7,6 +7,7 @@ $showDeleteButton = isset($_SESSION['user']['role']) && $_SESSION['user']['role'
 
 // Check if the logged-in user is a parent
 $isParent = isset($_SESSION['user']['role']) && $_SESSION['user']['role'] === 'parent';
+$parentEmail = ($isParent && isset($_SESSION['user']['email'])) ? mysqli_real_escape_string($con, $_SESSION['user']['email']) : null;
 
 ?>
 
@@ -99,163 +100,106 @@ if (isset($_POST['new_submit'])) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="assets/css/theme.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <title>Document</title>
-    <style>
-        body {
-            display: flex;
-            min-height: 100vh;
-        }
-
-        .sidebar {
-            width: 250px;
-            background-color: #0056b3;
-            color: #fff;
-            padding: 20px;
-            transition: all 0.3s ease;
-        }
-
-        .sidebar a {
-            color: #fff;
-            text-decoration: none;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 12px 15px;
-            border-radius: 5px;
-            margin-bottom: 8px;
-            transition: background 0.3s ease;
-        }
-
-        .sidebar a:hover,
-        .sidebar a.active {
-            background-color: #004494;
-        }
-
-        .dropdown-menu {
-            background-color: #004494;
-            border: none;
-        }
-
-        .dropdown-menu a {
-            color: #fff;
-            padding-left: 30px;
-        }
-
-        .content {
-            flex-grow: 1;
-            padding: 20px;
-        }
-
-        .toggle-btn {
-            display: none;
-            background-color: #004494;
-            color: #fff;
-            border: none;
-            padding: 10px 15px;
-            cursor: pointer;
-            width: 100%;
-            text-align: left;
-        }
-
-        .card {
-            border-radius: 15px;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-        }
-
-        @media (max-width: 768px) {
-            .sidebar {
-                width: 100%;
-                display: none;
-            }
-
-            .sidebar.active {
-                display: block;
-            }
-
-            .toggle-btn {
-                display: block;
-            }
-        }
-    </style>
+    <title>Infant Records</title>
 </head>
 
 <body>
-    <!-- Sidebar Menu -->
-    <button class="toggle-btn" onclick="toggleSidebar()"><i class="bi bi-list"></i> Menu</button>
+    <button class="toggle-btn" id="sidebarToggle"><i class="bi bi-list"></i> Menu</button>
     <div class="sidebar" id="sidebar">
         <h4 class="mb-4"><i class="bi bi-baby"></i> Infant Record System</h4>
         <a href="dashboard.php"><i class="bi bi-speedometer2"></i> Dashboard</a>
-        <a href="addinfant.php"><i class="bi bi-person"></i> Add Infant</a>
-        <?php if (isset($_SESSION['user']['role']) && ($_SESSION['user']['role'] === 'admin' || $_SESSION['user']['role'] === 'healthworker')): ?>
+        <a href="addinfant.php"><i class="bi bi-person-fill-add"></i> Add Infant</a>
+        <?php if (!$isParent && isset($_SESSION['user']['role']) && ($_SESSION['user']['role'] === 'admin' || $_SESSION['user']['role'] === 'healthworker')): ?>
             <a href="add_parents.php"><i class="bi bi-person-plus"></i> Add Parent</a>
         <?php endif; ?>
         <?php if (isset($_SESSION['user']['role']) && ($_SESSION['user']['role'] === 'admin' || $_SESSION['user']['role'] === 'healthworker' || $_SESSION['user']['role'] === 'parent')): ?>
-            <a href="view_parents.php"><i class="bi bi-book"></i> Parent Records</a>
+            <a href="view_parents.php"><i class="bi bi-people"></i> Parent Records</a>
         <?php endif; ?>
-        <a href="viewinfant.php" class="active"><i class="bi bi-book"></i> Infant Records</a>
-        <div class="dropdown">
-            <a href="#" class="dropdown-toggle" data-bs-toggle="dropdown"><i class="bi bi-syringe"></i> Vaccination Schedule</a>
-            <div class="dropdown-menu">
-                <a href="#upcoming" class="dropdown-item">Upcoming Vaccinations</a>
-                <a href="#completed" class="dropdown-item">Completed Vaccinations</a>
-            </div>
-        </div>
-        <a href="sms.php"><i class="bi bi-chat-dots"></i> SMS Management</a>
-        <a href="login_logs.php"><i class="bi bi-bar-chart"></i> Logs</a>
+        <a href="viewinfant.php" class="active"><i class="bi bi-journal-medical"></i> Infant Records</a>
+        <a href="account_settings.php"><i class="bi bi-gear"></i> Account Settings</a>
+        <?php if (!$isParent): ?>
+            <a href="vaccination_schedule.php"><i class="bi bi-journal-medical"></i> Vaccination Schedule</a>
+            <a href="sms.php"><i class="bi bi-chat-dots"></i> SMS Management</a>
+            <a href="login_logs.php"><i class="bi bi-clipboard-data"></i> Logs</a>
+        <?php endif; ?>
         <a href="logout.php"><i class="bi bi-box-arrow-right"></i> Logout</a>
     </div>
-    <div class="container mt-4">
-        <div class="card">
-            <div class="card-header text-center bg-primary text-white">
-                <h4>Infant Information</h4>
-            </div>
-            <div class="card-body">
-                <!-- Search Bar -->
-                <form method="GET" action="viewinfant.php" class="mb-3">
-                    <div class="input-group">
-                        <input type="text" id="search" class="form-control" placeholder="Search by ID, Name, or Birthplace...">
-                        <span class="input-group-text"><i class="bi bi-search"></i></span>
-                    </div>
-                </form>
-                <!-- Table -->
-                <table class="table table-bordered table-striped text-center">
-                    <thead class="table-dark">
-                        <tr>
-                            <th scope="col">#</th>
-                            <th scope="col">First</th>
-                            <th scope="col">Middle Name</th>
-                            <th scope="col">Last Name</th>
-                            <th scope="col">Date of Birth</th>
-                            <th scope="col">Place of Birth</th>
-                            <th scope="col">Sex</th>
-                            <th scope="col">Weight</th>
-                            <th scope="col">Height</th>
-                            <th scope="col">BloodType</th>
-                            <th scope="col">Nationality</th>
-                            <th scope="col">Action</th>
-
-                        </tr>
-                    </thead>
-                    <tbody>
+    <div class="content-area">
+        <div class="container-fluid mt-4">
+            <div class="card card-shadow">
+                <div class="card-header bg-white border-0 py-3">
+                    <h3 class="dashboard-title"><i class="bi bi-baby"></i>Infant Information</h3>
+                </div>
+                <div class="card-body">
+                    <?php if (!$isParent): ?>
+                        <form method="GET" action="viewinfant.php" class="mb-4">
+                            <div class="input-group search-bar search-bar-elevated">
+                                <span class="input-group-text"><i class="bi bi-search"></i></span>
+                                <input type="text" id="search" class="form-control" placeholder="Search by ID, Name, or Birthplace...">
+                            </div>
+                        </form>
+                    <?php endif; ?>
+                    <!-- Table -->
+                    <div class="table-modern table-modern-elevated">
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th scope="col">#</th>
+                                    <th scope="col">Full Name</th>
+                                    <th scope="col">Date of Birth</th>
+                                    <th scope="col">Place of Birth</th>
+                                    <th scope="col">Sex</th>
+                                    <th scope="col">Weight</th>
+                                    <th scope="col">Height</th>
+                                    <th scope="col">BloodType</th>
+                                    <th scope="col">Nationality</th>
+                                    <?php if (!$isParent): ?>
+                                        <th scope="col">Action</th>
+                                    <?php endif; ?>
+                                </tr>
+                            </thead>
+                            <tbody>
                         <?php
                         // FOR VIEWING INFANT INFORMATION
 
                         // $sql = "SELECT * FROM infantinfo";
-                        $search = isset($_GET['search']) ? mysqli_real_escape_string($con, $_GET['search']) : '';
+                        $search = (!$isParent && isset($_GET['search'])) ? mysqli_real_escape_string($con, $_GET['search']) : '';
 
-                        if (!empty($search)) {
-                            $sql = "SELECT * FROM infantinfo WHERE 
-                                id LIKE '%$search%' OR
-                                firstname LIKE '%$search%' OR 
-                                middlename LIKE '%$search%' OR 
-                                surname LIKE '%$search%' OR 
-                                placeofbirth LIKE '%$search%'";
+                        if ($isParent && $parentEmail) {
+                            // Resolve parent id from email
+                            $parentRes = mysqli_query($con, "SELECT id FROM parents WHERE email = '$parentEmail' LIMIT 1");
+                            $parentIdFilter = 0;
+                            if ($parentRes && mysqli_num_rows($parentRes) > 0) {
+                                $parentRow = mysqli_fetch_assoc($parentRes);
+                                $parentIdFilter = intval($parentRow['id']);
+                            }
+                            if (!empty($search)) {
+                                $sql = "SELECT * FROM infantinfo WHERE parent_id = '$parentIdFilter' AND (
+                                    id LIKE '%$search%' OR
+                                    firstname LIKE '%$search%' OR 
+                                    middlename LIKE '%$search%' OR 
+                                    surname LIKE '%$search%' OR 
+                                    placeofbirth LIKE '%$search%')";
+                            } else {
+                                $sql = "SELECT * FROM infantinfo WHERE parent_id = '$parentIdFilter'";
+                            }
                         } else {
-                            $sql = "SELECT * FROM infantinfo";
+                            if (!empty($search)) {
+                                $sql = "SELECT * FROM infantinfo WHERE 
+                                    id LIKE '%$search%' OR
+                                    firstname LIKE '%$search%' OR 
+                                    middlename LIKE '%$search%' OR 
+                                    surname LIKE '%$search%' OR 
+                                    placeofbirth LIKE '%$search%'";
+                            } else {
+                                $sql = "SELECT * FROM infantinfo";
+                            }
                         }
 
                         $result = mysqli_query($con, $sql);
@@ -265,6 +209,7 @@ if (isset($_POST['new_submit'])) {
                                 $firstname = $row['firstname'];
                                 $middlename = $row['middlename'];
                                 $surname = $row['surname'];
+                                $fullName = trim(preg_replace('/\s+/', ' ', $firstname . ' ' . ($middlename ?? '') . ' ' . $surname));
                                 $dateofbirth = $row['dateofbirth'];
                                 $placeofbirth = $row['placeofbirth'];
                                 $sex = $row['sex'];
@@ -275,9 +220,7 @@ if (isset($_POST['new_submit'])) {
 
                                 <tr>
                                     <th scope="row"><?php echo $id; ?></th>
-                                    <td><?php echo $firstname; ?></td>
-                                    <td><?php echo $middlename; ?></td>
-                                    <td><?php echo $surname; ?></td>
+                                    <td><?php echo $fullName; ?></td>
                                     <td><?php echo $dateofbirth; ?></td>
                                     <td><?php echo $placeofbirth; ?></td>
                                     <td><?php echo $sex; ?></td>
@@ -285,18 +228,16 @@ if (isset($_POST['new_submit'])) {
                                     <td><?php echo $height; ?></td>
                                     <td><?php echo $bloodtype; ?></td>
                                     <td><?php echo $nationality; ?></td>
-                                    <td>
-                                        <?php if (!$isParent): ?>
-                                            <!-- Trigger modal using data-bs-toggle and data-bs-target -->
-                                            <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#formModal_<?php echo $id; ?>">Edit</button>
+                                    <?php if (!$isParent): ?>
+                                        <td class="d-flex gap-1 justify-content-center action-icons">
+                                            <button class="btn btn-outline-success btn-sm" data-bs-toggle="modal" data-bs-target="#formModal_<?php echo $id; ?>" title="Edit"><i class="bi bi-pencil-square"></i></button>
                                             <?php if ($showDeleteButton): ?>
-                                                <a href="viewinfant.php?deleteid=<?php echo $id; ?>" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure you want to delete this record?')">Delete</a>
+                                                <button type="button" class="btn btn-outline-danger btn-sm" onclick="confirmDelete(<?php echo $id; ?>)" title="Delete"><i class="bi bi-trash"></i></button>
                                             <?php endif; ?>
-                                        <?php endif; ?>
-                                    </td>
+                                        </td>
+                                    <?php endif; ?>
                                 </tr>
 
-                                <!-- Modal for EDIT -->
                                 <!-- Modal for EDIT -->
                                 <div class="modal fade" id="formModal_<?php echo $id; ?>" tabindex="-1" aria-labelledby="formModalLabel_<?php echo $id; ?>" aria-hidden="true">
                                     <div class="modal-dialog">
@@ -356,18 +297,14 @@ if (isset($_POST['new_submit'])) {
                             } // Close the while loop
                         } // Close the if block
                         ?>
-                    </tbody>
-                </table>
-            </div>
+                            </tbody>
+                        </table>
+                        </div>
+                    </div>
         </div>
     </div>
 </body>
 <script>
-    function toggleSidebar() {
-        const sidebar = document.getElementById('sidebar');
-        sidebar.classList.toggle('active');
-    }
-
     function confirmDelete(id) {
         Swal.fire({
             title: 'Are you sure?',
@@ -419,6 +356,9 @@ if (isset($_POST['new_submit'])) {
         });
     });
 </script>
+<script src="assets/js/theme.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+</body>
 
 </html>

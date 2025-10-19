@@ -1,6 +1,7 @@
 <?php
 require 'dbForm.php';
 session_start();
+$role = $_SESSION['user']['role'] ?? '';
 
 // Check if the user is logged in and has admin privileges
 if (!isset($_SESSION['user']) || $_SESSION['user']['role'] !== 'admin') {
@@ -22,109 +23,39 @@ $result = $con->query($query);
   <title>Login Logs</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
+  <link rel="stylesheet" href="assets/css/theme.css">
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-  <style>
-    body {
-      display: flex;
-      min-height: 100vh;
-    }
-
-    .sidebar {
-      width: 250px;
-      background-color: #0056b3;
-      color: #fff;
-      padding: 20px;
-      transition: all 0.3s ease;
-    }
-
-    .sidebar a {
-      color: #fff;
-      text-decoration: none;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 12px 15px;
-      border-radius: 5px;
-      margin-bottom: 8px;
-      transition: background 0.3s ease;
-    }
-
-    .sidebar a:hover,
-    .sidebar a.active {
-      background-color: #004494;
-    }
-
-    .dropdown-menu {
-      background-color: #004494;
-      border: none;
-    }
-
-    .dropdown-menu a {
-      color: #fff;
-      padding-left: 30px;
-    }
-
-    .content {
-      flex-grow: 1;
-      padding: 20px;
-    }
-
-    .toggle-btn {
-      display: none;
-      background-color: #004494;
-      color: #fff;
-      border: none;
-      padding: 10px 15px;
-      cursor: pointer;
-      width: 100%;
-      text-align: left;
-    }
-
-    @media (max-width: 768px) {
-      .sidebar {
-        width: 100%;
-        display: none;
-      }
-
-      .sidebar.active {
-        display: block;
-      }
-
-      .toggle-btn {
-        display: block;
-      }
-    }
-  </style>
 </head>
 
-<body class="bg-light">
-  <button class="toggle-btn" onclick="toggleSidebar()"><i class="bi bi-list"></i> Menu</button>
+<body>
+  <button class="toggle-btn" id="sidebarToggle"><i class="bi bi-list"></i> Menu</button>
   <div class="sidebar" id="sidebar">
     <h4 class="mb-4"><i class="bi bi-baby"></i> Infant Record System</h4>
     <a href="dashboard.php"><i class="bi bi-speedometer2"></i> Dashboard</a>
-    <a href="addinfant.php"><i class="bi bi-person"></i> Add Infant</a>
-    <a href="add_parents.php"><i class="bi bi-person-plus"></i> Add Parent</a>
-    <a href="viewinfant.php"><i class="bi bi-book"></i> Infant Records</a>
-    <a href="view_parents.php"><i class="bi bi-book"></i> Parent Records</a>
-    <div class="dropdown">
-      <a href="#" class="dropdown-toggle" data-bs-toggle="dropdown"><i class="bi bi-syringe"></i> Vaccination Schedule</a>
-      <div class="dropdown-menu">
-        <a href="#upcoming" class="dropdown-item">Upcoming Vaccinations</a>
-        <a href="#completed" class="dropdown-item">Completed Vaccinations</a>
-      </div>
-    </div>
-    <a href="sms.php"><i class="bi bi-chat-dots"></i> SMS Management</a>
-    <a href="login_logs.php" class="active"><i class="bi bi-bar-chart"></i>Logs</a>
+    <a href="addinfant.php"><i class="bi bi-person-fill-add"></i> Add Infant</a>
+    <?php if ($role === 'admin' || $role === 'healthworker'): ?>
+      <a href="add_parents.php"><i class="bi bi-person-plus"></i> Add Parent</a>
+    <?php endif; ?>
+    <a href="viewinfant.php"><i class="bi bi-journal-medical"></i> Infant Records</a>
+    <a href="view_parents.php"><i class="bi bi-people"></i> Parent Records</a>
+    <a href="account_settings.php"><i class="bi bi-gear"></i> Account Settings</a>
+    <?php if ($role !== 'parent'): ?>
+      <a href="vaccination_schedule.php"><i class="bi bi-journal-medical"></i> Vaccination Schedule</a>
+      <a href="sms.php"><i class="bi bi-chat-dots"></i> SMS Management</a>
+      <a href="login_logs.php" class="active"><i class="bi bi-clipboard-data"></i> Logs</a>
+    <?php endif; ?>
     <a href="logout.php"><i class="bi bi-box-arrow-right"></i> Logout</a>
   </div>
-  <div class="container mt-5">
-    <div class="card shadow-sm">
-      <div class="card-header bg-primary text-white">
-        <h4 class="mb-0">User Login Logs</h4>
-      </div>
-      <div class="card-body table-responsive">
-        <table class="table table-bordered table-striped table-hover">
+  <div class="content-area">
+    <div class="container-fluid mt-4">
+      <div class="card card-shadow">
+        <div class="card-header bg-white border-0 py-3">
+          <h3 class="dashboard-title mb-0"><i class="bi bi-clipboard-data"></i>User Login Logs</h3>
+        </div>
+        <div class="card-body table-modern table-modern-elevated">
+          <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
           <thead class="table-light">
             <tr>
               <th>#</th>
@@ -135,8 +66,8 @@ $result = $con->query($query);
               <th>Reason</th>
               <th>Timestamp</th>
             </tr>
-          </thead>
-          <tbody>
+            </thead>
+            <tbody>
             <?php if ($result && $result->num_rows > 0): ?>
               <?php $i = 1; ?>
               <?php while ($row = $result->fetch_assoc()): ?>
@@ -157,8 +88,9 @@ $result = $con->query($query);
                 <td colspan="7" class="text-center text-muted">No login logs found.</td>
               </tr>
             <?php endif; ?>
-          </tbody>
-        </table>
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   </div>
@@ -169,6 +101,7 @@ $result = $con->query($query);
     }
   </script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="assets/js/theme.js"></script>
 
 </body>
 

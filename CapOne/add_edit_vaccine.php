@@ -1,5 +1,6 @@
 <?php
 include 'dbForm.php';
+require_once 'sms_queue_helpers.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     echo 'Invalid request';
@@ -11,35 +12,58 @@ $infant_id = isset($_POST['infant_id']) ? intval($_POST['infant_id']) : 0;
 $vaccine_name = isset($_POST['vaccine_name']) ? trim($_POST['vaccine_name']) : '';
 $date_vaccination = isset($_POST['date_vaccination']) ? $_POST['date_vaccination'] : null;
 $next_dose_date = isset($_POST['next_dose_date']) && $_POST['next_dose_date'] !== '' ? $_POST['next_dose_date'] : null;
-$status = isset($_POST['status']) ? $_POST['status'] : 'Pending';
+$time = isset($_POST['time']) && $_POST['time'] !== '' ? $_POST['time'] : null;
+$statusInput = isset($_POST['status']) ? trim($_POST['status']) : 'Pending';
+$normalizedStatus = ($statusInput === 'Completed') ? 'Completed' : 'Pending';
 $remarks = isset($_POST['remarks']) ? trim($_POST['remarks']) : '';
+$parent_phone = isset($_POST['parent_phone']) ? trim($_POST['parent_phone']) : '';
+$barangay = isset($_POST['barangay']) ? trim($_POST['barangay']) : '';
 
-if ($infant_id <= 0 || $vaccine_name === '' || !$date_vaccination) {
+ensureSmsQueueTable($con);
+ensureParentBarangayColumn($con);
+ensureScheduleBarangayColumn($con);
+
+if ($infant_id <= 0 || $vaccine_name === '' || !$date_vaccination || !$time || $barangay === '') {
     echo 'Missing required fields';
     exit;
 }
 
 if ($vacc_id === 0) {
+    $status = 'Pending';
     // INSERT new vaccination schedule
     $stmt = mysqli_prepare($con, "INSERT INTO tbl_vaccination_schedule 
-        (infant_id, vaccine_name, date_vaccination, next_dose_date, status, remarks) 
-        VALUES (?, ?, ?, ?, ?, ?)");
-    mysqli_stmt_bind_param($stmt, "isssss", $infant_id, $vaccine_name, $date_vaccination, $next_dose_date, $status, $remarks);
+        (infant_id, vaccine_name, date_vaccination, next_dose_date, time, status, remarks, barangay) 
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+    mysqli_stmt_bind_param($stmt, "isssssss", $infant_id, $vaccine_name, $date_vaccination, $next_dose_date, $time, $status, $remarks, $barangay);
 
-    if (mysqli_stmt_execute($stmt)) {
+    $executed = mysqli_stmt_execute($stmt);
+    if ($executed) {
+        $newId = mysqli_insert_id($con);
+        if ($status === 'Completed') {
+            removeFromSmsQueue($con, $newId);
+        } else {
+            syncSmsQueue($con, $newId, $infant_id, $parent_phone, $barangay);
+        }
         echo 'success_add';
     } else {
         echo 'Insert error: ' . mysqli_error($con);
     }
     mysqli_stmt_close($stmt);
 } else {
+    $status = $normalizedStatus;
     // UPDATE existing vaccination record
     $stmt = mysqli_prepare($con, "UPDATE tbl_vaccination_schedule 
-        SET infant_id=?, vaccine_name=?, date_vaccination=?, next_dose_date=?, status=?, remarks=? 
+        SET infant_id=?, vaccine_name=?, date_vaccination=?, next_dose_date=?, time=?, status=?, remarks=?, barangay=? 
         WHERE vacc_id=?");
-    mysqli_stmt_bind_param($stmt, "isssssi", $infant_id, $vaccine_name, $date_vaccination, $next_dose_date, $status, $remarks, $vacc_id);
+    mysqli_stmt_bind_param($stmt, "isssssssi", $infant_id, $vaccine_name, $date_vaccination, $next_dose_date, $time, $status, $remarks, $barangay, $vacc_id);
 
-    if (mysqli_stmt_execute($stmt)) {
+    $executed = mysqli_stmt_execute($stmt);
+    if ($executed) {
+        if ($status === 'Completed') {
+            removeFromSmsQueue($con, $vacc_id);
+        } else {
+            syncSmsQueue($con, $vacc_id, $infant_id, $parent_phone, $barangay);
+        }
         echo 'success_update';
     } else {
         echo 'Update error: ' . mysqli_error($con);

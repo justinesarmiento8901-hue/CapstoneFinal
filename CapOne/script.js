@@ -45,6 +45,11 @@ document.addEventListener("DOMContentLoaded", function () {
           setTimeout(() => {
             result.style.display = "none";
           }, 2500);
+          try {
+            if (typeof loadQueue === "function") {
+              loadQueue();
+            }
+          } catch (_) {}
         };
         const markError = (msg) => {
           result.style.display = "block";
