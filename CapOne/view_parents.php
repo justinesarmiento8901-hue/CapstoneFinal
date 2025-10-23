@@ -42,14 +42,14 @@ if (isset($_POST['update_submit'])) {
     $first_name = $_POST['update_first_name'];
     $last_name = $_POST['update_last_name'];
     $phone = $_POST['update_phone_number'];
-    $email = $_POST['update_email'];
+    $barangay = $_POST['update_barangay'];
     $address = $_POST['update_address'];
 
     $sql = "UPDATE parents SET 
                 first_name = '$first_name', 
                 last_name = '$last_name', 
                 phone = '$phone', 
-                email = '$email', 
+                barangay = '$barangay', 
                 address = '$address'
             WHERE id = '$id'";
 
@@ -89,13 +89,13 @@ if (isset($_POST['update_submit'])) {
     <link rel="stylesheet" href="assets/css/theme.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <title>Parent Records</title>
+    <title>Infant Records</title>
 </head>
 
 <body>
     <button class="toggle-btn" id="sidebarToggle"><i class="bi bi-list"></i> Menu</button>
     <div class="sidebar" id="sidebar">
-        <h4 class="mb-4"><i class="bi bi-people"></i> Parent Record System</h4>
+        <h4 class="mb-4"> Infant Record System</h4>
         <a href="dashboard.php"><i class="bi bi-speedometer2"></i> Dashboard</a>
         <a href="addinfant.php"><i class="bi bi-person-fill-add"></i> Add Infant</a>
         <?php if (!$isParent && isset($_SESSION['user']['role']) && ($_SESSION['user']['role'] === 'admin' || $_SESSION['user']['role'] === 'healthworker')): ?>
@@ -105,9 +105,15 @@ if (isset($_POST['update_submit'])) {
             <a href="view_parents.php" class="active"><i class="bi bi-people"></i> Parent Records</a>
         <?php endif; ?>
         <a href="viewinfant.php"><i class="bi bi-journal-medical"></i> Infant Records</a>
+        <?php if (!$isParent && isset($_SESSION['user']['role']) && $_SESSION['user']['role'] === 'admin'): ?>
+            <a href="update_growth.php"><i class="bi bi-activity"></i> Growth Tracking</a>
+        <?php endif; ?>
         <a href="account_settings.php"><i class="bi bi-gear"></i> Account Settings</a>
         <?php if (!$isParent): ?>
             <a href="vaccination_schedule.php"><i class="bi bi-journal-medical"></i> Vaccination Schedule</a>
+            <?php if (isset($_SESSION['user']['role']) && in_array($_SESSION['user']['role'], ['admin', 'report'], true)): ?>
+                <a href="generate_report.php"><i class="bi bi-clipboard-data"></i> Reports</a>
+            <?php endif; ?>
             <a href="sms.php"><i class="bi bi-chat-dots"></i> SMS Management</a>
             <a href="login_logs.php"><i class="bi bi-clipboard-data"></i> Logs</a>
         <?php endif; ?>
@@ -141,11 +147,13 @@ if (isset($_POST['update_submit'])) {
                                 <th scope="col">#</th>
                                 <th scope="col">Full Name</th>
                                 <th scope="col">Phone Number</th>
-                                <th scope="col">Email</th>
+                                <th scope="col">Barangay</th>
                                 <th scope="col">Address</th>
                                 <th scope="col">Infant IDs</th>
                                 <th scope="col">Infant Names</th>
-                                <th scope="col">Action</th>
+                                <?php if (!$isParent): ?>
+                                    <th scope="col">Action</th>
+                                <?php endif; ?>
                             </tr>
                             </thead>
                             <tbody>
@@ -206,27 +214,25 @@ if (isset($_POST['update_submit'])) {
                                     $last_name = $row['last_name'];
                                     $fullName = trim(preg_replace('/\s+/', ' ', $first_name . ' ' . $last_name));
                                     $phone = $row['phone'];
-                                    $email = $row['email'];
+                                    $barangay = $row['barangay'];
                                     $address = $row['address']; ?>
 
                                     <tr>
                                         <th scope="row"><?php echo $id; ?></th>
                                         <td><?php echo $fullName; ?></td>
                                         <td><?php echo $phone; ?></td>
-                                        <td><?php echo $email; ?></td>
+                                        <td><?php echo $barangay; ?></td>
                                         <td><?php echo $address; ?></td>
                                         <td><?php echo $row['infant_ids'] ?: 'N/A'; ?></td> <!-- Display concatenated Infant IDs -->
                                         <td><?php echo $row['infant_names'] ?: 'N/A'; ?></td> <!-- Display concatenated Infant Names -->
-                                        <td class="d-flex gap-1 justify-content-center action-icons">
-                                            <?php if (!$isParent): // Allow actions only if the user is not a parent 
-                                            ?>
+                                        <?php if (!$isParent): ?>
+                                            <td class="d-flex gap-1 justify-content-center action-icons">
                                                 <button class="btn btn-outline-success btn-sm" onclick="confirmEdit(<?php echo $id; ?>)" title="Edit"><i class="bi bi-pencil-square"></i></button>
                                                 <?php if ($showDeleteButton): ?>
                                                     <button class="btn btn-outline-danger btn-sm" onclick="confirmDelete(<?php echo $id; ?>)" title="Delete"><i class="bi bi-trash"></i></button>
                                                 <?php endif; ?>
-                                            <?php endif; ?>
-                                            <a href="view_details.php?parent_id=<?php echo $id; ?>" class="btn btn-outline-info btn-sm" title="Details"><i class="bi bi-eye"></i></a>
-                                        </td>
+                                            </td>
+                                        <?php endif; ?>
                                     </tr>
 
                                     <!-- Modal for EDIT -->
@@ -253,8 +259,8 @@ if (isset($_POST['update_submit'])) {
                                                             <input type="text" class="form-control" name="update_phone_number" value="<?php echo $phone; ?>">
                                                         </div>
                                                         <div class="mb-3">
-                                                            <label for="email" class="form-label">Email</label>
-                                                            <input type="email" class="form-control" name="update_email" value="<?php echo $email; ?>">
+                                                            <label for="barangay" class="form-label">Barangay</label>
+                                                            <input type="text" class="form-control" name="update_barangay" value="<?php echo $barangay; ?>">
                                                         </div>
                                                         <div class="mb-3">
                                                             <label for="address" class="form-label">Address</label>

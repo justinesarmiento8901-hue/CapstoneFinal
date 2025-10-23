@@ -121,9 +121,15 @@ if (isset($_POST['new_submit'])) {
             <a href="view_parents.php"><i class="bi bi-people"></i> Parent Records</a>
         <?php endif; ?>
         <a href="viewinfant.php" class="active"><i class="bi bi-journal-medical"></i> Infant Records</a>
+        <?php if (!$isParent && isset($_SESSION['user']['role']) && $_SESSION['user']['role'] === 'admin'): ?>
+            <a href="update_growth.php"><i class="bi bi-activity"></i> Growth Tracking</a>
+        <?php endif; ?>
         <a href="account_settings.php"><i class="bi bi-gear"></i> Account Settings</a>
         <?php if (!$isParent): ?>
             <a href="vaccination_schedule.php"><i class="bi bi-journal-medical"></i> Vaccination Schedule</a>
+            <?php if (isset($_SESSION['user']['role']) && in_array($_SESSION['user']['role'], ['admin', 'report'], true)): ?>
+                <a href="generate_report.php"><i class="bi bi-clipboard-data"></i> Reports</a>
+            <?php endif; ?>
             <a href="sms.php"><i class="bi bi-chat-dots"></i> SMS Management</a>
             <a href="login_logs.php"><i class="bi bi-clipboard-data"></i> Logs</a>
         <?php endif; ?>
@@ -159,9 +165,7 @@ if (isset($_POST['new_submit'])) {
                                     <th scope="col">Height</th>
                                     <th scope="col">BloodType</th>
                                     <th scope="col">Nationality</th>
-                                    <?php if (!$isParent): ?>
-                                        <th scope="col">Action</th>
-                                    <?php endif; ?>
+                                    <th scope="col">Action</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -216,7 +220,10 @@ if (isset($_POST['new_submit'])) {
                                 $weight = $row['weight'];
                                 $height = $row['height'];
                                 $bloodtype = $row['bloodtype'];
-                                $nationality = $row['nationality']; ?>
+                                $nationality = $row['nationality'];
+                                $parentIdForInfant = isset($row['parent_id']) ? (int) $row['parent_id'] : 0;
+                                $viewDetailsUrl = 'view_details.php?parent_id=' . $parentIdForInfant;
+                                ?>
 
                                 <tr>
                                     <th scope="row"><?php echo $id; ?></th>
@@ -228,14 +235,17 @@ if (isset($_POST['new_submit'])) {
                                     <td><?php echo $height; ?></td>
                                     <td><?php echo $bloodtype; ?></td>
                                     <td><?php echo $nationality; ?></td>
-                                    <?php if (!$isParent): ?>
-                                        <td class="d-flex gap-1 justify-content-center action-icons">
+                                    <td class="d-flex gap-1 justify-content-center action-icons">
+                                        <a href="<?php echo htmlspecialchars($viewDetailsUrl); ?>" class="btn btn-outline-info btn-sm" title="View Details">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                        <?php if (!$isParent): ?>
                                             <button class="btn btn-outline-success btn-sm" data-bs-toggle="modal" data-bs-target="#formModal_<?php echo $id; ?>" title="Edit"><i class="bi bi-pencil-square"></i></button>
                                             <?php if ($showDeleteButton): ?>
                                                 <button type="button" class="btn btn-outline-danger btn-sm" onclick="confirmDelete(<?php echo $id; ?>)" title="Delete"><i class="bi bi-trash"></i></button>
                                             <?php endif; ?>
-                                        </td>
-                                    <?php endif; ?>
+                                        <?php endif; ?>
+                                    </td>
                                 </tr>
 
                                 <!-- Modal for EDIT -->

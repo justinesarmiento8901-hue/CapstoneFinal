@@ -35,7 +35,11 @@ if ($result && mysqli_num_rows($result) > 0) {
         $output .= '<td>' . htmlspecialchars($row['height'] ?? '', ENT_QUOTES, 'UTF-8') . '</td>';
         $output .= '<td>' . htmlspecialchars($row['bloodtype'] ?? '', ENT_QUOTES, 'UTF-8') . '</td>';
         $output .= '<td>' . htmlspecialchars($row['nationality'] ?? '', ENT_QUOTES, 'UTF-8') . '</td>';
+        $parentIdForInfant = isset($row['parent_id']) ? (int) $row['parent_id'] : 0;
+        $viewDetailsUrl = 'view_details.php?parent_id=' . $parentIdForInfant;
+
         $output .= '<td class="d-flex gap-1 justify-content-center">';
+        $output .= '<a href="' . htmlspecialchars($viewDetailsUrl, ENT_QUOTES, 'UTF-8') . '" class="btn btn-outline-info btn-sm" title="View Details"><i class="bi bi-eye"></i></a>';
         if ($showEditButton) {
             $output .= '<button class="btn btn-outline-success btn-sm" onclick="confirmEdit(' . $id . ')" title="Edit"><i class="bi bi-pencil-square"></i></button>';
         }

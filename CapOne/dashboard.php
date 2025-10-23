@@ -201,18 +201,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['register_healthworker
     <div class="sidebar" id="sidebar">
         <h4 class="mb-4"><i class="bi bi-baby"></i> Infant Record System</h4>
         <a href="dashboard.php" class="active"><i class="bi bi-speedometer2"></i> Dashboard</a>
-
         <a href="addinfant.php"><i class="bi bi-person-fill-add"></i> Add Infant</a>
         <?php if ($role === 'admin' || $role === 'healthworker'): ?>
             <a href="add_parents.php"><i class="bi bi-person-plus"></i> Add Parent</a>
+            <a href="view_parents.php"><i class="bi bi-people"></i> Parent Records</a>
+            <a href="update_growth.php"><i class="bi bi-activity"></i> Growth Tracking</a>
         <?php endif; ?>
-        <a href="view_parents.php"><i class="bi bi-people"></i> Parent Records</a>
         <a href="viewinfant.php"><i class="bi bi-journal-medical"></i> Infant Records</a>
         <a href="account_settings.php"><i class="bi bi-gear"></i> Account Settings</a>
 
         <?php if ($role !== 'parent'): ?>
             <a href="vaccination_schedule.php"><i class="bi bi-journal-medical"></i> Vaccination Schedule</a>
-
+            <?php if (in_array($role, ['admin', 'report'], true)): ?>
+                <a href="generate_report.php"><i class="bi bi-clipboard-data"></i> Reports</a>
+            <?php endif; ?>
             <a href="sms.php"><i class="bi bi-chat-dots"></i> SMS Management</a>
             <a href="login_logs.php"><i class="bi bi-clipboard-data"></i> Logs</a>
         <?php endif; ?>
@@ -229,40 +231,80 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['register_healthworker
                 <div class="card-body">
                     <div class="row g-3 mb-4">
                         <div class="col-md-3">
-                            <div class="summary-card summary-infants">
-                                <div class="summary-icon"><i class="bi bi-people-fill"></i></div>
-                                <div>
-                                    <p class="summary-label">Total Infants</p>
-                                    <h4 class="summary-value"><?php echo $infantCount; ?></h4>
+                            <?php if ($role === 'admin'): ?>
+                                <a href="viewinfant.php" class="summary-card summary-infants d-block text-decoration-none">
+                                    <div class="summary-icon"><i class="bi bi-people-fill"></i></div>
+                                    <div>
+                                        <p class="summary-label">Total Infants</p>
+                                        <h4 class="summary-value"><?php echo $infantCount; ?></h4>
+                                    </div>
+                                </a>
+                            <?php else: ?>
+                                <div class="summary-card summary-infants">
+                                    <div class="summary-icon"><i class="bi bi-people-fill"></i></div>
+                                    <div>
+                                        <p class="summary-label">Total Infants</p>
+                                        <h4 class="summary-value"><?php echo $infantCount; ?></h4>
+                                    </div>
                                 </div>
-                            </div>
+                            <?php endif; ?>
                         </div>
                         <div class="col-md-3">
-                            <div class="summary-card summary-parents">
-                                <div class="summary-icon"><i class="bi bi-person-bounding-box"></i></div>
-                                <div>
-                                    <p class="summary-label">Total Parents</p>
-                                    <h4 class="summary-value"><?php echo $parentCount; ?></h4>
+                            <?php if ($role === 'admin'): ?>
+                                <a href="view_parents.php" class="summary-card summary-parents d-block text-decoration-none">
+                                    <div class="summary-icon"><i class="bi bi-person-bounding-box"></i></div>
+                                    <div>
+                                        <p class="summary-label">Total Parents</p>
+                                        <h4 class="summary-value"><?php echo $parentCount; ?></h4>
+                                    </div>
+                                </a>
+                            <?php else: ?>
+                                <div class="summary-card summary-parents">
+                                    <div class="summary-icon"><i class="bi bi-person-bounding-box"></i></div>
+                                    <div>
+                                        <p class="summary-label">Total Parents</p>
+                                        <h4 class="summary-value"><?php echo $parentCount; ?></h4>
+                                    </div>
                                 </div>
-                            </div>
+                            <?php endif; ?>
                         </div>
                         <div class="col-md-3">
-                            <div class="summary-card summary-pending">
-                                <div class="summary-icon"><i class="bi bi-exclamation-octagon"></i></div>
-                                <div>
-                                    <p class="summary-label">Pending Vaccinations</p>
-                                    <h4 class="summary-value"><?php echo $pendingSchedules; ?></h4>
+                            <?php if ($role === 'admin'): ?>
+                                <a href="vaccination_schedule.php?status=Pending" class="summary-card summary-pending d-block text-decoration-none">
+                                    <div class="summary-icon"><i class="bi bi-exclamation-octagon"></i></div>
+                                    <div>
+                                        <p class="summary-label">Pending Vaccinations</p>
+                                        <h4 class="summary-value"><?php echo $pendingSchedules; ?></h4>
+                                    </div>
+                                </a>
+                            <?php else: ?>
+                                <div class="summary-card summary-pending">
+                                    <div class="summary-icon"><i class="bi bi-exclamation-octagon"></i></div>
+                                    <div>
+                                        <p class="summary-label">Pending Vaccinations</p>
+                                        <h4 class="summary-value"><?php echo $pendingSchedules; ?></h4>
+                                    </div>
                                 </div>
-                            </div>
+                            <?php endif; ?>
                         </div>
                         <div class="col-md-3">
-                            <div class="summary-card summary-completed">
-                                <div class="summary-icon"><i class="bi bi-check-circle"></i></div>
-                                <div>
-                                    <p class="summary-label">Completed Vaccinations</p>
-                                    <h4 class="summary-value"><?php echo $completedSchedules; ?></h4>
+                            <?php if ($role === 'admin'): ?>
+                                <a href="vaccination_schedule.php?status=Completed" class="summary-card summary-completed d-block text-decoration-none">
+                                    <div class="summary-icon"><i class="bi bi-check-circle"></i></div>
+                                    <div>
+                                        <p class="summary-label">Completed Vaccinations</p>
+                                        <h4 class="summary-value"><?php echo $completedSchedules; ?></h4>
+                                    </div>
+                                </a>
+                            <?php else: ?>
+                                <div class="summary-card summary-completed">
+                                    <div class="summary-icon"><i class="bi bi-check-circle"></i></div>
+                                    <div>
+                                        <p class="summary-label">Completed Vaccinations</p>
+                                        <h4 class="summary-value"><?php echo $completedSchedules; ?></h4>
+                                    </div>
                                 </div>
-                            </div>
+                            <?php endif; ?>
                         </div>
                     </div>
                     <div class="row g-3 mb-4">
@@ -278,6 +320,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['register_healthworker
                         <div class="col-md-8 d-flex align-items-end justify-content-end gap-2 quick-actions">
                             <a href="login_logs.php" class="btn btn-outline-success"><i class="bi bi-journal-check"></i>View Login Logs</a>
                             <?php if ($role === 'admin'): ?>
+                                <a href="update_growth.php" class="btn btn-outline-info"><i class="bi bi-activity"></i>Growth Tracking</a>
                                 <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#registerHealthWorkerModal">
                                     <i class="bi bi-person-plus"></i>Register Health Worker
                                 </button>

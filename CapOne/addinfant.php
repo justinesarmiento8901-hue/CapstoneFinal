@@ -108,9 +108,15 @@ if (isset($_POST['submit'])) {
         <?php endif; ?>
         <a href="view_parents.php"><i class="bi bi-people"></i> Parent Records</a>
         <a href="viewinfant.php"><i class="bi bi-journal-medical"></i> Infant Records</a>
+        <?php if ($role === 'admin'): ?>
+            <a href="update_growth.php"><i class="bi bi-activity"></i> Growth Tracking</a>
+        <?php endif; ?>
         <a href="account_settings.php"><i class="bi bi-gear"></i> Account Settings</a>
         <?php if ($role !== 'parent'): ?>
             <a href="vaccination_schedule.php"><i class="bi bi-journal-medical"></i> Vaccination Schedule</a>
+            <?php if (in_array($role, ['admin', 'report'], true)): ?>
+                <a href="generate_report.php"><i class="bi bi-clipboard-data"></i> Reports</a>
+            <?php endif; ?>
 
             <a href="sms.php"><i class="bi bi-chat-dots"></i> SMS Management</a>
             <a href="login_logs.php"><i class="bi bi-clipboard-data"></i> Logs</a>
@@ -180,12 +186,12 @@ if (isset($_POST['submit'])) {
                     </div>
 
                     <div class="col-md-4">
-                        <label class="form-label">Weight (kg)</label>
-                        <input type="number" class="form-control" name="weight" placeholder="Enter weight" required>
+                        <label class="form-label">Birth Weight (kg)</label>
+                        <input type="number" class="form-control" name="weight" placeholder="Enter weight" step="0.01" min="0" required>
                     </div>
                     <div class="col-md-4">
-                        <label class="form-label">Height (cm)</label>
-                        <input type="number" class="form-control" name="height" placeholder="Enter height" required>
+                        <label class="form-label">Birth Height (cm)</label>
+                        <input type="number" class="form-control" name="height" placeholder="Enter height" step="0.1" min="0" required>
                     </div>
                     <div class="col-md-4">
                         <label class="form-label">Blood Type</label>

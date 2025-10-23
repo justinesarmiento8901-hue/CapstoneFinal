@@ -44,7 +44,7 @@ if ($result && mysqli_num_rows($result) > 0) {
         $lastName = $row['last_name'] ?? '';
         $fullName = trim(preg_replace('/\s+/', ' ', $firstName . ' ' . $lastName));
         $phone = $row['phone'] ?? '';
-        $email = $row['email'] ?? '';
+        $barangay = $row['barangay'] ?? '';
         $address = $row['address'] ?? '';
         $infantIds = $row['infant_ids'] ?: 'N/A';
         $infantNames = $row['infant_names'] ?: 'N/A';
@@ -53,7 +53,7 @@ if ($result && mysqli_num_rows($result) > 0) {
         $output .= '<th scope="row">' . htmlspecialchars((string) $id, ENT_QUOTES, 'UTF-8') . '</th>';
         $output .= '<td>' . htmlspecialchars($fullName, ENT_QUOTES, 'UTF-8') . '</td>';
         $output .= '<td>' . htmlspecialchars($phone, ENT_QUOTES, 'UTF-8') . '</td>';
-        $output .= '<td>' . htmlspecialchars($email, ENT_QUOTES, 'UTF-8') . '</td>';
+        $output .= '<td>' . htmlspecialchars($barangay, ENT_QUOTES, 'UTF-8') . '</td>';
         $output .= '<td>' . htmlspecialchars($address, ENT_QUOTES, 'UTF-8') . '</td>';
         $output .= '<td>' . htmlspecialchars($infantIds, ENT_QUOTES, 'UTF-8') . '</td>';
         $output .= '<td>' . htmlspecialchars($infantNames, ENT_QUOTES, 'UTF-8') . '</td>';
@@ -64,7 +64,6 @@ if ($result && mysqli_num_rows($result) > 0) {
                 $output .= '<button class="btn btn-outline-danger btn-sm" onclick="confirmDelete(' . $id . ')" title="Delete"><i class="bi bi-trash"></i></button>';
             }
         }
-        $output .= '<a href="view_details.php?parent_id=' . $id . '" class="btn btn-outline-info btn-sm" title="Details"><i class="bi bi-eye"></i></a>';
         $output .= '</td>';
         $output .= '</tr>';
     }

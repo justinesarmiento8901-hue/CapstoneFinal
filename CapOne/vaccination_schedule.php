@@ -3,6 +3,7 @@
 include 'dbForm.php'; // must create/include this; provides $con (MySQLi)
 session_start();
 $role = $_SESSION['user']['role'] ?? '';
+$statusFilter = $_GET['status'] ?? '';
 $barangays = [];
 $barangayConfig = __DIR__ . '/config/barangays.php';
 if (is_readable($barangayConfig)) {
@@ -29,6 +30,16 @@ if (is_readable($barangayConfig)) {
     <style>
         .pointer {
             cursor: pointer;
+        }
+
+        .sortable {
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .sortable .sort-icon {
+            font-size: 0.75rem;
+            margin-left: 4px;
         }
 
         .small-col {
@@ -207,10 +218,16 @@ if (is_readable($barangayConfig)) {
             <a href="add_parents.php"><i class="bi bi-person-plus"></i> Add Parent</a>
         <?php endif; ?>
         <a href="viewinfant.php"><i class="bi bi-journal-medical"></i> Infant Records</a>
+        <?php if ($role === 'admin'): ?>
+            <a href="update_growth.php"><i class="bi bi-activity"></i> Growth Tracking</a>
+        <?php endif; ?>
         <a href="view_parents.php"><i class="bi bi-people"></i> Parent Records</a>
         <a href="account_settings.php"><i class="bi bi-gear"></i> Account Settings</a>
         <?php if ($role !== 'parent'): ?>
             <a href="vaccination_schedule.php" class="active"><i class="bi bi-journal-medical"></i> Vaccination Schedule</a>
+            <?php if (in_array($role, ['admin', 'report'], true)): ?>
+                <a href="generate_report.php"><i class="bi bi-clipboard-data"></i> Reports</a>
+            <?php endif; ?>
             <a href="sms.php"><i class="bi bi-chat-dots"></i> SMS Management</a>
             <a href="login_logs.php"><i class="bi bi-clipboard-data"></i> Logs</a>
         <?php endif; ?>
@@ -224,13 +241,27 @@ if (is_readable($barangayConfig)) {
                     <h3 class="dashboard-title"><i class="bi bi-syringe"></i>Vaccination Schedule Management</h3>
                     <small class="text-muted">Vaccines are grouped by infant to reduce redundancy</small>
                 </div>
-                <?php if ($role !== 'parent'): ?>
-                    <div>
+                <div class="d-flex align-items-center gap-2">
+                    <div class="btn-group">
+                        <button type="button" class="btn btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="bi bi-sort-alpha-down"></i> Sort
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item sort-option" href="#" data-sort="infant" data-default-direction="asc">Infant (A-Z)</a></li>
+                            <li><a class="dropdown-item sort-option" href="#" data-sort="vaccine" data-default-direction="asc">Vaccine (A-Z)</a></li>
+                            <li><a class="dropdown-item sort-option" href="#" data-sort="next_dose" data-default-direction="asc">Next Dose (Earliest First)</a></li>
+                            <li><a class="dropdown-item sort-option" href="#" data-sort="status" data-default-direction="asc">Status (Pending First)</a></li>
+                        </ul>
+                    </div>
+                    <button type="button" class="btn btn-outline-secondary" id="resetStatusFilter">
+                        <i class="bi bi-arrow-counterclockwise"></i> Reset Filter
+                    </button>
+                    <?php if ($role !== 'parent'): ?>
                         <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addEditModal" id="openAddModal">
                             <i class="fas fa-plus"></i> Add New Schedule
                         </button>
-                    </div>
-                <?php endif; ?>
+                    <?php endif; ?>
+                </div>
             </div>
 
             <!-- Table -->
@@ -245,10 +276,10 @@ if (is_readable($barangayConfig)) {
                                     <th>Parent</th>
                                     <th>Contact</th>
                                     <th>Today Date</th>
-                                    <th>Vaccine</th>
-                                    <th>Next Dose</th>
+                                    <th class="sortable" data-sort="vaccine">Vaccine<span class="sort-icon"></span></th>
+                                    <th class="sortable" data-sort="next_dose">Next Dose<span class="sort-icon"></span></th>
                                     <th>Time</th>
-                                    <th class="small-col">Status</th>
+                                    <th class="small-col sortable" data-sort="status">Status<span class="sort-icon"></span></th>
                                     <th>Remarks</th>
                                     <th class="small-col">Action</th>
                                 </tr>
@@ -294,12 +325,7 @@ if (is_readable($barangayConfig)) {
 
                         <div class="mb-2">
                             <label class="form-label">Barangay</label>
-                            <select class="form-select" name="barangay" id="barangay" required>
-                                <option value="">-- Select Barangay --</option>
-                                <?php foreach ($barangays as $brgy): ?>
-                                    <option value="<?php echo htmlspecialchars($brgy); ?>"><?php echo htmlspecialchars($brgy); ?></option>
-                                <?php endforeach; ?>
-                            </select>
+                            <input type="text" class="form-control" name="barangay" id="barangay" placeholder="Barangay will load from selected parent" readonly required>
                         </div>
 
                         <div class="mb-2">
@@ -353,26 +379,206 @@ if (is_readable($barangayConfig)) {
         </div>
     </div>
 
+    <div class="modal fade" id="vaccGrowthModal" tabindex="-1" aria-labelledby="vaccGrowthModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="vaccGrowthModalLabel">Update Growth</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="vaccGrowthForm">
+                        <input type="hidden" name="vacc_id" id="vaccGrowthVaccId">
+                        <input type="hidden" name="infant_id" id="vaccGrowthInfantId">
+                        <div class="mb-3">
+                            <label class="form-label">Infant Name</label>
+                            <input type="text" class="form-control" id="vaccGrowthInfantName" readonly>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Vaccine</label>
+                            <input type="text" class="form-control" id="vaccGrowthVaccineName" readonly>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Sex</label>
+                            <input type="text" class="form-control" id="vaccGrowthSex" readonly>
+                        </div>
+                        <div class="row g-2 mt-2">
+                            <div class="col-md-6">
+                                <label class="form-label">Reference Min Weight (kg)</label>
+                                <input type="text" class="form-control" id="vaccGrowthWeightMin" readonly>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Reference Max Weight (kg)</label>
+                                <input type="text" class="form-control" id="vaccGrowthWeightMax" readonly>
+                            </div>
+                        </div>
+                        <div class="row g-2 mt-2">
+                            <div class="col-md-6">
+                                <label class="form-label">Reference Min Height (cm)</label>
+                                <input type="text" class="form-control" id="vaccGrowthHeightMin" readonly>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Reference Max Height (cm)</label>
+                                <input type="text" class="form-control" id="vaccGrowthHeightMax" readonly>
+                            </div>
+                        </div>
+                        <div class="row g-2">
+                            <div class="col-md-6">
+                                <label class="form-label">Previous Weight (kg)</label>
+                                <input type="text" class="form-control" id="vaccGrowthPreviousWeight" readonly>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Previous Height (cm)</label>
+                                <input type="text" class="form-control" id="vaccGrowthPreviousHeight" readonly>
+                            </div>
+                        </div>
+                        <div class="row g-2 mt-2">
+                            <div class="col-md-6">
+                                <label class="form-label">Current Weight (kg)</label>
+                                <input type="number" class="form-control" id="vaccGrowthCurrentWeight" name="current_weight" step="0.1" pattern="^\d+(\.\d)?$" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Current Height (cm)</label>
+                                <input type="number" class="form-control" id="vaccGrowthCurrentHeight" name="current_height" step="0.1" pattern="^\d+(\.\d)?$" required>
+                            </div>
+                        </div>
+                        <div class="mt-3">
+                            <label class="form-label">Growth Status</label>
+                            <input type="text" class="form-control" id="vaccGrowthStatus" readonly>
+                        </div>
+                        <div class="mt-4 text-end">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-primary" id="vaccGrowthSaveBtn">Save</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Bootstrap bundle -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="assets/js/theme.js"></script>
 
     <script>
+        var statusFilter = '<?php echo htmlspecialchars($statusFilter); ?>';
+
+        function resetVaccineSelect() {
+            $('#vaccine_name option').prop('disabled', false).removeAttr('title');
+        }
+
+        function updateVaccineSelectState() {
+            var disableSelect = $('#status').val() === 'Completed';
+            $('#vaccine_name').prop('disabled', disableSelect);
+        }
+
+        function applyCompletedVaccines(infantId) {
+            resetVaccineSelect();
+            if (!infantId) {
+                updateVaccineSelectState();
+                return;
+            }
+            $.getJSON('get_completed_vaccines.php', {
+                infant_id: infantId
+            }, function(resp) {
+                if (resp && Array.isArray(resp.completed)) {
+                    var completedSet = new Set(resp.completed);
+                    resp.completed.forEach(function(name) {
+                        $('#vaccine_name option').filter(function() {
+                            return $(this).val() === name;
+                        }).prop('disabled', true).attr('title', 'Already completed');
+                    });
+                    var selected = $('#vaccine_name').val();
+                    if (selected && completedSet.has(selected)) {
+                        $('#vaccine_name').val('');
+                    }
+                }
+                updateVaccineSelectState();
+            });
+        }
+
         $(function() {
+            var currentSort = '';
+            var currentDirection = 'asc';
+
+            function getTodayDate() {
+                var today = new Date();
+                var year = today.getFullYear();
+                var month = String(today.getMonth() + 1).padStart(2, '0');
+                var day = String(today.getDate()).padStart(2, '0');
+                return year + '-' + month + '-' + day;
+            }
+
+            function updateSortIndicators() {
+                $('.sortable .sort-icon').text('');
+                if (!currentSort) {
+                    return;
+                }
+                var indicator = currentDirection === 'asc' ? '▲' : '▼';
+                $(".sortable[data-sort='" + currentSort + "'] .sort-icon").text(indicator);
+            }
+
             // load table
             function loadTable() {
+                var requestData = {};
+                if (statusFilter) {
+                    requestData.status = statusFilter;
+                }
+                if (currentSort) {
+                    requestData.sort = currentSort;
+                    requestData.direction = currentDirection;
+                }
                 $.ajax({
                     url: 'fetch_schedule.php',
                     method: 'GET',
+                    data: requestData,
                     success: function(data) {
                         $('#scheduleBody').html(data);
+                        updateSortIndicators();
                     },
                     error: function() {
                         $('#scheduleBody').html('<tr><td colspan="11" class="text-center text-danger">Error loading data</td></tr>');
                     }
                 });
+
+                if (statusFilter) {
+                    $('#status').val(statusFilter);
+                }
             }
             loadTable();
+            updateSortIndicators();
+
+            $('.sortable').on('click', function() {
+                var newSort = $(this).data('sort');
+                if (currentSort === newSort) {
+                    currentDirection = currentDirection === 'asc' ? 'desc' : 'asc';
+                } else {
+                    currentSort = newSort;
+                    currentDirection = 'asc';
+                }
+                updateSortIndicators();
+                loadTable();
+            });
+
+            $('#resetStatusFilter').on('click', function() {
+                statusFilter = '';
+                window.history.replaceState({}, document.title, 'vaccination_schedule.php');
+                loadTable();
+            });
+
+            $('.sort-option').on('click', function(e) {
+                e.preventDefault();
+                var selectedSort = $(this).data('sort');
+                var defaultDirection = $(this).data('default-direction') === 'desc' ? 'desc' : 'asc';
+                if (currentSort === selectedSort) {
+                    currentDirection = currentDirection === 'asc' ? 'desc' : 'asc';
+                } else {
+                    currentSort = selectedSort;
+                    currentDirection = defaultDirection;
+                }
+                updateSortIndicators();
+                loadTable();
+            });
 
             // open add modal: reset form
             $('#openAddModal').on('click', function() {
@@ -382,12 +588,19 @@ if (is_readable($barangayConfig)) {
                 $('#parent_phone').val('');
                 $('#parent_phone_display').val('');
                 $('#barangay').val('');
+                $('#date_vaccination').val(getTodayDate());
+                $('#vaccine_name').prop('disabled', false);
+                resetVaccineSelect();
+                $('#status').val('Pending');
+                updateVaccineSelectState();
                 $('#infantNameDisplayWrapper').addClass('d-none');
                 $('#infantSearchWrapper').removeClass('d-none');
                 $('#modalsearch_infant').prop('required', true).prop('readonly', false);
                 $('#modalsearch_infant').val('');
                 $('#infant_name_display').val('');
             });
+
+            $('#status').on('change', updateVaccineSelectState);
 
             // submit add/edit
             $('#addEditForm').on('submit', function(e) {
@@ -445,12 +658,17 @@ if (is_readable($barangayConfig)) {
                             $('#modalTitle').text('Edit Vaccination Schedule');
                             $('#vacc_id').val(d.vacc_id);
                             $('#infant_id').val(d.infant_id);
+                            resetVaccineSelect();
                             $('#vaccine_name').val(d.vaccine_name);
                             $('#date_vaccination').val(d.date_vaccination);
+                            if (!d.date_vaccination) {
+                                $('#date_vaccination').val(getTodayDate());
+                            }
                             $('#next_dose_date').val(d.next_dose_date);
                             var timeValue = d.time ? d.time.substring(0, 5) : '';
                             $('#vaccination_time').val(timeValue);
                             $('#status').val(d.status);
+                            updateVaccineSelectState();
                             $('#remarks').val(d.remarks);
                             $('#parent_phone').val('');
                             $('#parent_phone_display').val('');
@@ -465,8 +683,8 @@ if (is_readable($barangayConfig)) {
                                         $('#parent_phone').val(resp.phone);
                                         $('#parent_phone_display').val(resp.phone);
                                     }
-                                    if ((!$('#barangay').val() || $('#barangay').val() === '') && resp && resp.barangay) {
-                                        $('#barangay').val(resp.barangay);
+                                    if (resp && typeof resp.barangay !== 'undefined') {
+                                        $('#barangay').val(resp.barangay || '');
                                     }
                                 });
                             }
@@ -536,16 +754,119 @@ if (is_readable($barangayConfig)) {
                 });
             });
 
-            // delegate status checkbox toggle
+            var vaccGrowthModalEl = document.getElementById('vaccGrowthModal');
+            var vaccGrowthModalInstance = vaccGrowthModalEl ? new bootstrap.Modal(vaccGrowthModalEl) : null;
+            var pendingStatusCheckbox = null;
+            var pendingVaccId = null;
+            var pendingInfantId = null;
+
+            function enforceSingleDecimal(input) {
+                input.addEventListener('blur', function() {
+                    var value = parseFloat(input.value);
+                    if (!isNaN(value)) {
+                        input.value = value.toFixed(1);
+                    }
+                });
+            }
+
+            if (vaccGrowthModalEl) {
+                enforceSingleDecimal(document.getElementById('vaccGrowthCurrentWeight'));
+                enforceSingleDecimal(document.getElementById('vaccGrowthCurrentHeight'));
+            }
+
+            function openVaccGrowthModal(checkbox) {
+                if (!vaccGrowthModalInstance) {
+                    return;
+                }
+                pendingStatusCheckbox = checkbox;
+                pendingVaccId = checkbox.data('id');
+                pendingInfantId = checkbox.data('infant-id');
+                $('#vaccGrowthVaccId').val(pendingVaccId);
+                $('#vaccGrowthInfantId').val(pendingInfantId);
+                $('#vaccGrowthInfantName').val(checkbox.data('infant-name') || '');
+                $('#vaccGrowthVaccineName').val(checkbox.data('vaccine-name') || '');
+                $('#vaccGrowthSex').val('');
+                $('#vaccGrowthWeightMin').val('');
+                $('#vaccGrowthWeightMax').val('');
+                $('#vaccGrowthHeightMin').val('');
+                $('#vaccGrowthHeightMax').val('');
+                $('#vaccGrowthPreviousWeight').val('');
+                $('#vaccGrowthPreviousHeight').val('');
+                $('#vaccGrowthCurrentWeight').val('').prop('readonly', false);
+                $('#vaccGrowthCurrentHeight').val('').prop('readonly', false);
+                $('#vaccGrowthStatus').val('');
+                $('#vaccGrowthSaveBtn').prop('disabled', true).text('Loading...');
+                vaccGrowthModalInstance.show();
+                $.ajax({
+                    url: 'get_growth_modal_data.php',
+                    method: 'GET',
+                    dataType: 'json',
+                    data: {
+                        infant_id: pendingInfantId
+                    },
+                    success: function(resp) {
+                        if (!resp || !resp.success) {
+                            var msg = resp && resp.message ? resp.message : 'Failed to load growth data.';
+                            vaccGrowthModalInstance.hide();
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error',
+                                text: msg
+                            });
+                            pendingStatusCheckbox = null;
+                            pendingVaccId = null;
+                            pendingInfantId = null;
+                            return;
+                        }
+                        var data = resp.data;
+                        $('#vaccGrowthSex').val(data.sex || '--');
+                        $('#vaccGrowthWeightMin').val(data.weight_min || '--');
+                        $('#vaccGrowthWeightMax').val(data.weight_max || '--');
+                        $('#vaccGrowthHeightMin').val(data.height_min || '--');
+                        $('#vaccGrowthHeightMax').val(data.height_max || '--');
+                        $('#vaccGrowthPreviousWeight').val(data.previous_weight || '--');
+                        $('#vaccGrowthPreviousHeight').val(data.previous_height || '--');
+                        $('#vaccGrowthCurrentWeight').val(data.current_weight || '');
+                        $('#vaccGrowthCurrentHeight').val(data.current_height || '');
+                        $('#vaccGrowthStatus').val(data.status || '');
+                        if (data.status === 'Completed') {
+                            $('#vaccGrowthCurrentWeight').prop('readonly', true);
+                            $('#vaccGrowthCurrentHeight').prop('readonly', true);
+                            $('#vaccGrowthSaveBtn').prop('disabled', true).text('Completed');
+                        } else {
+                            $('#vaccGrowthCurrentWeight').prop('readonly', false);
+                            $('#vaccGrowthCurrentHeight').prop('readonly', false);
+                            $('#vaccGrowthSaveBtn').prop('disabled', false).text('Save');
+                        }
+                    },
+                    error: function() {
+                        vaccGrowthModalInstance.hide();
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: 'Failed to load growth data.'
+                        });
+                        pendingStatusCheckbox = null;
+                        pendingVaccId = null;
+                        pendingInfantId = null;
+                    }
+                });
+            }
+
             $(document).on('change', '.statusCheckbox', function() {
-                var id = $(this).data('id');
-                var checked = $(this).is(':checked') ? 'Completed' : 'Pending';
+                var checkbox = $(this);
+                var isChecked = checkbox.is(':checked');
+                if (isChecked) {
+                    checkbox.prop('checked', false);
+                    openVaccGrowthModal(checkbox);
+                    return;
+                }
                 $.ajax({
                     url: 'update_status.php',
                     method: 'POST',
                     data: {
-                        vacc_id: id,
-                        status: checked
+                        vacc_id: checkbox.data('id'),
+                        status: 'Pending'
                     },
                     success: function(resp) {
                         var r = resp.trim();
@@ -555,8 +876,9 @@ if (is_readable($barangayConfig)) {
                                 title: 'Error',
                                 text: r
                             });
+                            checkbox.prop('checked', true);
                         } else {
-                            loadTable(); // refresh to update badge/next dose etc.
+                            loadTable();
                         }
                     },
                     error: function() {
@@ -565,8 +887,63 @@ if (is_readable($barangayConfig)) {
                             title: 'Error',
                             text: 'Status update failed.'
                         });
+                        checkbox.prop('checked', true);
                     }
                 });
+            });
+
+            $('#vaccGrowthForm').on('submit', function(e) {
+                e.preventDefault();
+                if (!pendingVaccId || !pendingInfantId) {
+                    return;
+                }
+                $('#vaccGrowthSaveBtn').prop('disabled', true).text('Saving...');
+                $.ajax({
+                    url: 'save_vaccine_growth.php',
+                    method: 'POST',
+                    dataType: 'json',
+                    data: $(this).serialize(),
+                    success: function(resp) {
+                        if (!resp || !resp.success) {
+                            var msg = resp && resp.message ? resp.message : 'Failed to save growth data.';
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error',
+                                text: msg
+                            });
+                            return;
+                        }
+                        if (vaccGrowthModalInstance) {
+                            vaccGrowthModalInstance.hide();
+                        }
+                        if (pendingStatusCheckbox) {
+                            pendingStatusCheckbox.prop('checked', true);
+                        }
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Success',
+                            text: resp.message || 'Growth data saved.'
+                        });
+                        loadTable();
+                    },
+                    error: function() {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: 'Failed to save growth data.'
+                        });
+                    },
+                    complete: function() {
+                        $('#vaccGrowthSaveBtn').prop('disabled', false).text('Save');
+                    }
+                });
+            });
+
+            $('#vaccGrowthModal').on('hidden.bs.modal', function() {
+                pendingStatusCheckbox = null;
+                pendingVaccId = null;
+                pendingInfantId = null;
+                $('#vaccGrowthSaveBtn').prop('disabled', false).text('Save');
             });
 
             // Clickable infant name => go to details page
@@ -585,6 +962,7 @@ if (is_readable($barangayConfig)) {
             $('#parent_phone').val('');
             $('#parent_phone_display').val('');
             $('#barangay').val('');
+            resetVaccineSelect();
             if (query.length < 2) {
                 $('#infantResults').hide();
                 return;
@@ -611,6 +989,7 @@ if (is_readable($barangayConfig)) {
             if (barangay) {
                 $('#barangay').val(barangay);
             }
+            applyCompletedVaccines(id);
             $('#infantResults').hide();
         });
 

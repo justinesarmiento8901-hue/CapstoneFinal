@@ -35,7 +35,10 @@ while ($row = $refResult->fetch_assoc()) {
     $ageStage = $row['age_stage'] ?? '';
     if ($vaccineName !== '' && $ageStage !== '') {
         $status_map[$vaccineName][$ageStage] = 'N/A';
-        $referenceStageMap[$vaccineName] = $ageStage;
+        if (!isset($referenceStageMap[$vaccineName])) {
+            $referenceStageMap[$vaccineName] = [];
+        }
+        $referenceStageMap[$vaccineName][] = $ageStage;
     }
 }
 
@@ -51,7 +54,8 @@ while ($row = $scheduleResult->fetch_assoc()) {
     }
     $stage = $row['stage'] ?? '';
     if ($stage === '' || $stage === null) {
-        $stage = $referenceStageMap[$vaccineName] ?? '';
+        $stageList = $referenceStageMap[$vaccineName] ?? [];
+        $stage = $stageList[0] ?? '';
     }
     if ($stage === '') {
         continue;
@@ -164,12 +168,12 @@ $stages = [
                                 if ($vaccine['age_stage'] === $db_stage):
                                     $status = $status_map[$vaccine['vaccine_name']][$db_stage] ?? 'N/A';
                                     if ($status === 'Completed') {
-                                        $badgeClass = 'bg-success';
+                                        $badgeClass = 'bg-success text-white';
                                     } elseif ($status === 'Pending') {
                                         $badgeClass = 'bg-warning text-dark';
                                     } else {
                                         $status = 'N/A';
-                                        $badgeClass = 'bg-secondary';
+                                        $badgeClass = 'bg-secondary text-white';
                                     }
                                     $displayStatus = htmlspecialchars($status);
                                     echo "<td><span class='badge $badgeClass badge-status'>$displayStatus</span></td>";

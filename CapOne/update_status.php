@@ -10,13 +10,8 @@ if (!isset($_POST['vacc_id'], $_POST['status'])) {
 $vacc_id = intval($_POST['vacc_id']);
 $status = $_POST['status'] === 'Completed' ? 'Completed' : 'Pending';
 
-// 1️⃣ Update vaccination_schedule
-$update_sched = $con->prepare("UPDATE tbl_vaccination_schedule SET status=? WHERE vacc_id=?");
-$update_sched->bind_param("si", $status, $vacc_id);
-$update_sched->execute();
-
-// 2️⃣ Fetch infant_id, vaccine_name, stage
-$get_info = $con->prepare("SELECT infant_id, vaccine_name, stage, barangay FROM tbl_vaccination_schedule WHERE vacc_id=? LIMIT 1");
+// 1️⃣ Fetch existing schedule info first
+$get_info = $con->prepare("SELECT status, infant_id, vaccine_name, stage, barangay FROM tbl_vaccination_schedule WHERE vacc_id=? LIMIT 1");
 $get_info->bind_param("i", $vacc_id);
 $get_info->execute();
 $info = $get_info->get_result()->fetch_assoc();
@@ -26,6 +21,23 @@ if (!$info) {
     exit;
 }
 
+$currentStatus = $info['status'];
+
+// Prevent reverting completed schedules back to pending
+if ($currentStatus === 'Completed' && $status !== 'Completed') {
+    echo "Completed schedules cannot revert to pending";
+    exit;
+}
+
+// Skip unnecessary update when status is unchanged
+if ($currentStatus !== $status) {
+    $update_sched = $con->prepare("UPDATE tbl_vaccination_schedule SET status=? WHERE vacc_id=?");
+    $update_sched->bind_param("si", $status, $vacc_id);
+    $update_sched->execute();
+    $update_sched->close();
+}
+
+// 2️⃣ Fetch infant_id, vaccine_name, stage
 $infant_id = $info['infant_id'];
 $vaccine_name = $info['vaccine_name'];
 $stage = $info['stage'];
