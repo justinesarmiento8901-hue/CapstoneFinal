@@ -143,10 +143,10 @@ if (isset($_POST['submit'])) {
                 <form method="POST" class="row g-3">
                     <div class="col-12 position-relative">
                         <?php if (isset($_SESSION['user']['role']) && $_SESSION['user']['role'] !== 'parent'): ?>
-                            <label for="searchParent" class="form-label">Search Parent (Users.name)</label>
+                            <label for="searchParent" class="form-label">Search Parent </label>
                             <div class="input-group search-bar">
                                 <span class="input-group-text"><i class="bi bi-search"></i></span>
-                                <input type="text" class="form-control" id="searchParent" placeholder="Type parent name..." autocomplete="off">
+                                <input type="text" class="form-control" id="searchParent" placeholder="Type parent name..." autocomplete="off" required>
                             </div>
                             <div id="searchResults" class="live-search-results mt-2"></div>
                             <input type="hidden" name="parent_id" id="parent_id" required>

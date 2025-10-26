@@ -149,6 +149,10 @@ a:hover {
     background: linear-gradient(135deg, #28c76f, #48da89);
 }
 
+.summary-reports {
+    background: linear-gradient(135deg, #6a5cf6, #8f7afc);
+}
+
 .dashboard-title {
     display: flex;
     align-items: center;

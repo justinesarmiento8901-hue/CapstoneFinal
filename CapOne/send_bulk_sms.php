@@ -15,26 +15,43 @@ ensureSmsQueueTable($con);
 ensureParentBarangayColumn($con);
 ensureScheduleBarangayColumn($con);
 
+$input = json_decode(file_get_contents('php://input'), true);
+$barangayFilter = '';
+if (is_array($input) && isset($input['barangay'])) {
+    $barangayFilter = trim((string) $input['barangay']);
+}
+
+if ($barangayFilter === '') {
+    echo json_encode(['success' => false, 'error' => 'Barangay selection is required.']);
+    exit;
+}
+
 $rows = [];
-$result = mysqli_query($con, "SELECT id, infant_id, phone, barangay, next_dose_date, schedule_time FROM sms_queue ORDER BY id ASC");
-if ($result) {
-    while ($row = mysqli_fetch_assoc($result)) {
-        $phone = trim($row['phone'] ?? '');
-        if ($phone !== '') {
-            $rows[] = [
-                'id' => (int) $row['id'],
-                'infant_id' => (int) ($row['infant_id'] ?? 0),
-                'phone' => $phone,
-                'barangay' => $row['barangay'] ?? null,
-                'next_dose_date' => $row['next_dose_date'],
-                'schedule_time' => $row['schedule_time'],
-            ];
+$stmt = mysqli_prepare($con, "SELECT id, infant_id, phone, barangay, next_dose_date, schedule_time FROM sms_queue WHERE barangay = ? ORDER BY id ASC");
+if ($stmt) {
+    mysqli_stmt_bind_param($stmt, 's', $barangayFilter);
+    mysqli_stmt_execute($stmt);
+    $result = mysqli_stmt_get_result($stmt);
+    if ($result) {
+        while ($row = mysqli_fetch_assoc($result)) {
+            $phone = trim((string) ($row['phone'] ?? ''));
+            if ($phone !== '') {
+                $rows[] = [
+                    'id' => (int) ($row['id'] ?? 0),
+                    'infant_id' => (int) ($row['infant_id'] ?? 0),
+                    'phone' => $phone,
+                    'barangay' => $row['barangay'] ?? null,
+                    'next_dose_date' => $row['next_dose_date'] ?? null,
+                    'schedule_time' => $row['schedule_time'] ?? null,
+                ];
+            }
         }
     }
+    mysqli_stmt_close($stmt);
 }
 
 if (empty($rows)) {
-    echo json_encode(['success' => false, 'error' => 'No queued SMS to send.']);
+    echo json_encode(['success' => false, 'error' => 'No queued SMS to send for the selected barangay.']);
     exit;
 }
 

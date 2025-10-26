@@ -34,17 +34,18 @@ if (isset($_POST['submit'])) {
         $stmt->bind_param('ssssss', $first_name, $last_name, $phone, $email, $address, $barangay);
 
         if ($stmt->execute()) {
+            $newParentId = $stmt->insert_id;
             $stmt->close();
 
             // Also create a corresponding users account with role 'parent' if missing
             $fullName = mysqli_real_escape_string($con, trim($first_name . ' ' . $last_name));
             $emailEsc = mysqli_real_escape_string($con, $email);
             $accountNote = '';
+            $tempPassword = null;
 
             $check = mysqli_query($con, "SELECT id FROM users WHERE email = '$emailEsc' LIMIT 1");
             if ($check && mysqli_num_rows($check) === 0) {
                 // Generate temporary password
-                $tempPassword = '';
                 try {
                     $tempPassword = bin2hex(random_bytes(4)); // 8-char hex
                 } catch (Exception $e) {
@@ -57,15 +58,23 @@ if (isset($_POST['submit'])) {
                     $accountNote = "\nLogin Email: $email\nTemporary Password: $tempPassword";
                 } else {
                     $accountNote = "\n(Note: Failed to auto-create login account.)";
+                    $tempPassword = null;
                 }
             } else {
                 $accountNote = "\n(Account already exists for this email.)";
             }
 
             $successMsg = "Parent added successfully!" . $accountNote;
+            $tableTempPassword = $tempPassword ?? 'N/A';
 
             echo "<script>
                 document.addEventListener('DOMContentLoaded', function() {
+                    const newParentData = " . json_encode([
+                        'id' => $newParentId,
+                        'email' => $email,
+                        'tempPassword' => $tableTempPassword,
+                        'accountNote' => $accountNote,
+                    ]) . ";
                     Swal.fire({
                         title: 'Success!',
                         text: " . json_encode($successMsg) . ",
@@ -73,7 +82,9 @@ if (isset($_POST['submit'])) {
                         confirmButtonText: 'OK'
                     }).then((result) => {
                         if (result.isConfirmed) {
-                            window.location.href = 'view_parents.php';
+                            if (typeof window.addParentRow === 'function') {
+                                window.addParentRow(newParentData);
+                            }
                         }
                     });
                 });
@@ -181,11 +192,78 @@ if (isset($_POST['submit'])) {
                     </div>
                 </form>
             </div>
+
+            <div class="card card-shadow p-4 mt-4">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h4 class="dashboard-title mb-0"><i class="bi bi-table"></i> Newly Added Parents</h4>
+                    <button type="button" id="clear-new-parents" class="btn btn-sm btn-outline-secondary">
+                        <i class="bi bi-trash"></i> Reset Table
+                    </button>
+                </div>
+                <div class="table-modern">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th scope="col">ID</th>
+                                    <th scope="col">Email</th>
+                                    <th scope="col">Temporary Pass</th>
+                                </tr>
+                            </thead>
+                            <tbody id="new-parents-table-body">
+                                <tr class="text-center text-muted" data-placeholder="true">
+                                    <td colspan="3">No parent added in this session yet.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="assets/js/theme.js"></script>
+    <script>
+        (function() {
+            const tableBody = document.getElementById('new-parents-table-body');
+            const resetButton = document.getElementById('clear-new-parents');
+
+            function createPlaceholderRow() {
+                const row = document.createElement('tr');
+                row.className = 'text-center text-muted';
+                row.setAttribute('data-placeholder', 'true');
+                row.innerHTML = '<td colspan="3">No parent added in this session yet.</td>';
+                return row;
+            }
+
+            window.addParentRow = function(data) {
+                if (!tableBody) {
+                    return;
+                }
+
+                const placeholderRow = tableBody.querySelector('[data-placeholder="true"]');
+                if (placeholderRow) {
+                    tableBody.removeChild(placeholderRow);
+                }
+
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${data.id}</td>
+                    <td>${data.email}</td>
+                    <td>${data.tempPassword}</td>
+                `;
+                tableBody.appendChild(row);
+            };
+
+            if (resetButton && tableBody) {
+                resetButton.addEventListener('click', function() {
+                    tableBody.innerHTML = '';
+                    tableBody.appendChild(createPlaceholderRow());
+                });
+            }
+        })();
+    </script>
 </body>
 
 </html>

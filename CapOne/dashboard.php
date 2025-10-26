@@ -14,6 +14,27 @@ $parentCountQuery = "SELECT COUNT(*) AS total_parents FROM parents";
 $parentCountResult = mysqli_query($con, $parentCountQuery);
 $parentCount = mysqli_fetch_assoc($parentCountResult)['total_parents'];
 
+$newParentsRecentCount = 0;
+$newParentsTodayCount = 0;
+$newParentsWeekCount = 0;
+$newParentsMonthCount = 0;
+
+$newParentsSummaryQuery = "SELECT
+        SUM(CASE WHEN created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY) THEN 1 ELSE 0 END) AS recent_count,
+        SUM(CASE WHEN DATE(created_at) = CURDATE() THEN 1 ELSE 0 END) AS today_count,
+        SUM(CASE WHEN YEARWEEK(created_at, 1) = YEARWEEK(CURDATE(), 1) THEN 1 ELSE 0 END) AS week_count,
+        SUM(CASE WHEN YEAR(created_at) = YEAR(CURDATE()) AND MONTH(created_at) = MONTH(CURDATE()) THEN 1 ELSE 0 END) AS month_count
+    FROM parents";
+$newParentsSummaryResult = mysqli_query($con, $newParentsSummaryQuery);
+if ($newParentsSummaryResult) {
+    $newParentsSummaryRow = mysqli_fetch_assoc($newParentsSummaryResult);
+    $newParentsRecentCount = (int) ($newParentsSummaryRow['recent_count'] ?? 0);
+    $newParentsTodayCount = (int) ($newParentsSummaryRow['today_count'] ?? 0);
+    $newParentsWeekCount = (int) ($newParentsSummaryRow['week_count'] ?? 0);
+    $newParentsMonthCount = (int) ($newParentsSummaryRow['month_count'] ?? 0);
+    mysqli_free_result($newParentsSummaryResult);
+}
+
 $pendingSchedules = 0;
 $completedSchedules = 0;
 $upcomingWeekCount = 0;
@@ -307,9 +328,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['register_healthworker
                             <?php endif; ?>
                         </div>
                     </div>
-                    <div class="row g-3 mb-4">
-                        <div class="col-md-4">
-                            <div class="summary-card summary-infants">
+                    <div class="row g-3 mb-4 align-items-stretch">
+                        <div class="col-md-3">
+                            <div class="summary-card summary-infants h-100">
                                 <div class="summary-icon"><i class="bi bi-calendar-event"></i></div>
                                 <div>
                                     <p class="summary-label">Upcoming Vaccinations</p>
@@ -317,7 +338,45 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['register_healthworker
                                 </div>
                             </div>
                         </div>
-                        <div class="col-md-8 d-flex align-items-end justify-content-end gap-2 quick-actions">
+                        <div class="col-md-5">
+                            <a href="newly_added_parents.php" class="summary-card summary-parents d-block text-decoration-none h-100">
+                                <div class="summary-icon"><i class="bi bi-person-plus"></i></div>
+                                <div>
+                                    <p class="summary-label mb-2">New Parents Overview</p>
+                                    <div class="row g-2 text-center small">
+                                        <div class="col-6">
+                                            <p class="mb-1 text-muted">Last 30 Days</p>
+                                            <h5 class="summary-value mb-0"><?php echo $newParentsRecentCount; ?></h5>
+                                        </div>
+                                        <div class="col-6">
+                                            <p class="mb-1 text-muted">Today</p>
+                                            <h5 class="summary-value mb-0"><?php echo $newParentsTodayCount; ?></h5>
+                                        </div>
+                                        <div class="col-6">
+                                            <p class="mb-1 text-muted">This Week</p>
+                                            <h5 class="summary-value mb-0"><?php echo $newParentsWeekCount; ?></h5>
+                                        </div>
+                                        <div class="col-6">
+                                            <p class="mb-1 text-muted">This Month</p>
+                                            <h5 class="summary-value mb-0"><?php echo $newParentsMonthCount; ?></h5>
+                                        </div>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="col-md-4">
+                            <a href="vaccination_period_report.php" class="summary-card summary-reports d-block text-decoration-none h-100">
+                                <div class="summary-icon"><i class="bi bi-clipboard-data"></i></div>
+                                <div>
+                                    <p class="summary-label mb-2">Vaccination Reports</p>
+                                    <p class="text-muted small mb-1">Generate coverage by barangay and schedule period.</p>
+                                    <p class="mb-0 fw-semibold text-primary">View Report &raquo;</p>
+                                </div>
+                            </a>
+                        </div>
+                    </div>
+                    <div class="row g-3 mb-4">
+                        <div class="col-12 d-flex align-items-end justify-content-end gap-2 quick-actions flex-wrap">
                             <a href="login_logs.php" class="btn btn-outline-success"><i class="bi bi-journal-check"></i>View Login Logs</a>
                             <?php if ($role === 'admin'): ?>
                                 <a href="update_growth.php" class="btn btn-outline-info"><i class="bi bi-activity"></i>Growth Tracking</a>

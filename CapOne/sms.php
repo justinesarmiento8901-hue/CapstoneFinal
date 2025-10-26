@@ -4,6 +4,11 @@ if (!isset($_SESSION['user'])) {
     header('Location: index.php');
     exit();
 }
+
+$barangays = include __DIR__ . '/config/barangays.php';
+if (!is_array($barangays)) {
+    $barangays = [];
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -74,6 +79,14 @@ if (!isset($_SESSION['user'])) {
                     <div class="card card-shadow p-4 h-100">
                         <div class="d-flex flex-column flex-lg-row align-items-lg-center justify-content-lg-between gap-2 mb-3">
                             <h3 class="dashboard-title mb-0"><i class="bi bi-list-ul"></i>Scheduled SMS Queue</h3>
+                            <select class="form-select w-100 w-lg-auto" id="barangayFilter">
+                                <option value="">Select Barangay</option>
+                                <?php foreach ($barangays as $barangayOption): ?>
+                                    <option value="<?= htmlspecialchars($barangayOption, ENT_QUOTES, 'UTF-8') ?>">
+                                        <?= htmlspecialchars($barangayOption, ENT_QUOTES, 'UTF-8') ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
                             <button type="button" class="btn btn-outline-success" id="sendBulkBtn" disabled><i class="bi bi-send-check"></i>Send Bulk Message</button>
                         </div>
                         <div id="bulkResult" class="mb-3" style="display:none;"></div>
@@ -109,6 +122,8 @@ if (!isset($_SESSION['user'])) {
         const queueBody = document.getElementById('smsQueueBody');
         const sendBulkBtn = document.getElementById('sendBulkBtn');
         const bulkResult = document.getElementById('bulkResult');
+        const barangayFilter = document.getElementById('barangayFilter');
+        let currentBarangay = '';
 
         function updateBulkResult(type, message) {
             if (!bulkResult) return;
@@ -120,7 +135,8 @@ if (!isset($_SESSION['user'])) {
         function renderQueue(rows) {
             queueBody.innerHTML = '';
             if (!rows || rows.length === 0) {
-                queueBody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">No schedules queued.</td></tr>';
+                const message = currentBarangay ? 'No schedules queued for the selected barangay.' : 'No schedules queued.';
+                queueBody.innerHTML = `<tr><td colspan="5" class="text-center text-muted">${message}</td></tr>`;
                 sendBulkBtn.disabled = true;
                 return;
             }
@@ -136,7 +152,7 @@ if (!isset($_SESSION['user'])) {
                 `;
                 queueBody.appendChild(tr);
             });
-            sendBulkBtn.disabled = false;
+            sendBulkBtn.disabled = currentBarangay === '';
         }
 
         function formatTime(timeStr) {
@@ -150,8 +166,13 @@ if (!isset($_SESSION['user'])) {
             return `${h}:${m} ${period}`;
         }
 
-        function loadQueue() {
-            fetch('fetch_sms_queue.php')
+        function loadQueue(filterBarangay) {
+            if (typeof filterBarangay === 'string') {
+                currentBarangay = filterBarangay;
+            }
+
+            const query = currentBarangay ? `?barangay=${encodeURIComponent(currentBarangay)}` : '';
+            fetch(`fetch_sms_queue.php${query}`)
                 .then(function(res) { return res.json(); })
                 .then(function(rows) {
                     renderQueue(Array.isArray(rows) ? rows : []);
@@ -162,7 +183,22 @@ if (!isset($_SESSION['user'])) {
                 });
         }
 
+        if (barangayFilter) {
+            barangayFilter.addEventListener('change', function() {
+                const selected = this.value.trim();
+                if (bulkResult) {
+                    bulkResult.style.display = 'none';
+                }
+                loadQueue(selected);
+            });
+        }
+
         sendBulkBtn.addEventListener('click', function() {
+            if (!currentBarangay) {
+                updateBulkResult('warning', 'Please select a barangay to send messages.');
+                return;
+            }
+
             sendBulkBtn.disabled = true;
             updateBulkResult('info', 'Sending messages...');
 
@@ -171,13 +207,13 @@ if (!isset($_SESSION['user'])) {
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({})
+                body: JSON.stringify({ barangay: currentBarangay })
             })
                 .then(function(res) { return res.json(); })
                 .then(function(response) {
                     if (response && response.success) {
                         updateBulkResult('success', response.message || 'Messages sent successfully.');
-                        loadQueue();
+                        loadQueue(currentBarangay);
                     } else {
                         const message = response && response.error ? response.error : 'Failed to send bulk messages.';
                         updateBulkResult('danger', message);

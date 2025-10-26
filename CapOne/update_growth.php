@@ -451,7 +451,7 @@ function computeAgeInMonths(?string $dateOfBirth): ?int
                                                     <td class="text-center">
                                                         <button
                                                             type="button"
-                                                            class="btn btn-outline-primary btn-sm"
+                                                            class="btn btn-success btn-sm d-inline-flex align-items-center justify-content-center"
                                                             data-bs-toggle="modal"
                                                             data-bs-target="#growthModal"
                                                             data-infant-id="<?php echo $infantId; ?>"
@@ -468,7 +468,8 @@ function computeAgeInMonths(?string $dateOfBirth): ?int
                                                             data-remarks="<?php echo htmlspecialchars($remarksText, ENT_QUOTES, 'UTF-8'); ?>"
                                                             data-status="<?php echo htmlspecialchars($statusLabel, ENT_QUOTES, 'UTF-8'); ?>"
                                                         >
-                                                            Edit
+                                                            <i class="bi bi-pencil-square"></i>
+                                                            <span class="visually-hidden">Edit</span>
                                                         </button>
                                                     </td>
                                                 </tr>

@@ -2,6 +2,15 @@
 session_start();
 $errors = $_SESSION['errors'] ?? [];
 unset($_SESSION['errors']);
+
+$barangays = [];
+$barangayConfig = __DIR__ . '/config/barangays.php';
+if (is_readable($barangayConfig)) {
+    $configBarangays = include $barangayConfig;
+    if (is_array($configBarangays)) {
+        $barangays = $configBarangays;
+    }
+}
 ?>
 
 <!DOCTYPE html>
@@ -270,6 +279,18 @@ unset($_SESSION['errors']);
                                 <input type="email" class="form-control" name="email" placeholder="Enter your email" required>
                                 <?php if (!empty($errors['email'])): ?>
                                     <small class="text-danger form-text"><?= $errors['email'] ?></small>
+                                <?php endif; ?>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Barangay</label>
+                                <select class="form-select" name="barangay" required>
+                                    <option value="" disabled selected>Select your barangay</option>
+                                    <?php foreach ($barangays as $barangay): ?>
+                                        <option value="<?= htmlspecialchars($barangay) ?>"><?= htmlspecialchars($barangay) ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                                <?php if (!empty($errors['barangay'])): ?>
+                                    <small class="text-danger form-text"><?= $errors['barangay'] ?></small>
                                 <?php endif; ?>
                             </div>
                             <div class="col-12">
