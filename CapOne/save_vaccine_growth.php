@@ -1,4 +1,6 @@
 <?php
+session_start();
+
 include 'dbForm.php';
 require_once 'sms_queue_helpers.php';
 
@@ -50,6 +52,42 @@ if ($currentWeight < 0 || $currentHeight < 0) {
 }
 
 $remarks = mb_substr($remarks, 0, 255);
+
+$vaccinatedByName = '';
+$userSession = $_SESSION['user'] ?? null;
+if ($userSession) {
+    $userRole = $userSession['role'] ?? '';
+    if ($userRole === 'healthworker') {
+        $healthWorkerUserId = (int) ($userSession['id'] ?? 0);
+        if ($healthWorkerUserId > 0) {
+            $hwStmt = $con->prepare('SELECT TRIM(CONCAT_WS(" ", firstname, middlename, lastname)) AS full_name FROM healthworker WHERE user_id = ? LIMIT 1');
+            if ($hwStmt) {
+                $hwStmt->bind_param('i', $healthWorkerUserId);
+                $hwStmt->execute();
+                $hwResult = $hwStmt->get_result();
+                if ($hwResult && $hwResult->num_rows > 0) {
+                    $hwRow = $hwResult->fetch_assoc();
+                    $vaccinatedByName = $hwRow['full_name'] ?? '';
+                }
+                $hwStmt->close();
+            }
+        }
+    } elseif ($userRole === 'admin') {
+        $adminStmt = $con->prepare('SELECT name FROM users WHERE id = ? LIMIT 1');
+        if ($adminStmt) {
+            $adminUserId = (int) ($userSession['id'] ?? 0);
+            $adminStmt->bind_param('i', $adminUserId);
+            $adminStmt->execute();
+            $adminResult = $adminStmt->get_result();
+            if ($adminResult && $adminResult->num_rows > 0) {
+                $adminRow = $adminResult->fetch_assoc();
+                $vaccinatedByName = $adminRow['name'] ?? '';
+            }
+            $adminStmt->close();
+        }
+    }
+}
+$vaccinatedByName = trim($vaccinatedByName);
 
 $infantStmt = $con->prepare('SELECT weight, height FROM infantinfo WHERE id = ? LIMIT 1');
 if (!$infantStmt) {
@@ -110,11 +148,20 @@ if ($updateInfantStmt) {
 }
 
 $status = 'Completed';
-$remarksUpdateStmt = $con->prepare('UPDATE tbl_vaccination_schedule SET status = ?, remarks = ? WHERE vacc_id = ?');
-if ($remarksUpdateStmt) {
-    $remarksUpdateStmt->bind_param('ssi', $status, $remarks, $vaccId);
-    $remarksUpdateStmt->execute();
-    $remarksUpdateStmt->close();
+if ($vaccinatedByName !== '') {
+    $remarksUpdateStmt = $con->prepare('UPDATE tbl_vaccination_schedule SET status = ?, remarks = ?, vaccinatedby = ? WHERE vacc_id = ?');
+    if ($remarksUpdateStmt) {
+        $remarksUpdateStmt->bind_param('sssi', $status, $remarks, $vaccinatedByName, $vaccId);
+        $remarksUpdateStmt->execute();
+        $remarksUpdateStmt->close();
+    }
+} else {
+    $remarksUpdateStmt = $con->prepare('UPDATE tbl_vaccination_schedule SET status = ?, remarks = ?, vaccinatedby = NULL WHERE vacc_id = ?');
+    if ($remarksUpdateStmt) {
+        $remarksUpdateStmt->bind_param('ssi', $status, $remarks, $vaccId);
+        $remarksUpdateStmt->execute();
+        $remarksUpdateStmt->close();
+    }
 }
 
 $detailsInfoStmt = $con->prepare('SELECT infant_id, vaccine_name, stage FROM tbl_vaccination_schedule WHERE vacc_id = ? LIMIT 1');
@@ -192,7 +239,8 @@ if ($detailInfantId && $detailVaccineName !== '') {
     } else {
         $insertDetailStmt = $con->prepare('INSERT INTO tbl_vaccination_details (infant_id, vaccine_name, stage, status, updated_at) VALUES (?, ?, ?, ?, NOW())');
         if ($insertDetailStmt) {
-            $insertDetailStmt->bind_param('isss', $detailInfantId, $detailVaccineName, $detailStage, $status);
+            $stageValue = $detailStage !== '' ? $detailStage : null;
+            $insertDetailStmt->bind_param('isss', $detailInfantId, $detailVaccineName, $stageValue, $status);
             $insertDetailStmt->execute();
             $insertDetailStmt->close();
         }

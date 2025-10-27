@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Oct 26, 2025 at 03:01 PM
+-- Generation Time: Oct 27, 2025 at 05:13 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -85,6 +85,27 @@ INSERT INTO `growth_reference` (`id`, `age_in_months`, `sex`, `weight_min`, `wei
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `healthworker`
+--
+
+CREATE TABLE `healthworker` (
+  `id` int(11) NOT NULL,
+  `user_id` int(11) NOT NULL,
+  `firstname` varchar(100) NOT NULL,
+  `middlename` varchar(100) DEFAULT NULL,
+  `lastname` varchar(100) NOT NULL,
+  `gender` enum('Male','Female','Other') DEFAULT NULL,
+  `address` varchar(255) DEFAULT NULL,
+  `contact_number` varchar(20) DEFAULT NULL,
+  `barangay_assigned` enum('Betes','Bibiclat','Bucot','La Purisima','Macabucod','Magsaysay','Pantoc','Poblacion Centro','Poblacion East I','Poblacion East II','Poblacion West III','Poblacion West IV','San Carlos','San Emiliano','San Eustacio','San Felipe Bata','San Felipe Matanda','San Juan','San Pablo Bata','San Pablo Matanda','Santiago','Santa Monica','Santo Rosario','Santo Tomas','Sunson','Umangan') NOT NULL,
+  `license_number` varchar(100) DEFAULT NULL,
+  `position` varchar(100) DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `infantinfo`
 --
 
@@ -115,10 +136,10 @@ INSERT INTO `infantinfo` (`id`, `firstname`, `middlename`, `surname`, `dateofbir
 (5, 'Maricel', 'Tolentino', 'Dela Cruz', '2025-03-23', 'Cabanatuan City', 'Female', 6, 72, NULL, 'AB+', 'Filipino', 2),
 (6, 'Jun', 'Tolentino', 'Dela Cruz', '2025-05-03', 'Cabanatuan City', 'Male', 6.1, 59, NULL, 'AB+', 'Filipino', 2),
 (7, 'Clarisse', 'Tolentino', 'Dela Cruz', '2025-07-21', 'Cabanatuan City', 'Female', 4.8, 65, NULL, 'AB+', 'Filipino', 2),
-(8, 'Joey', 'Garcia', 'Villanueva', '2025-03-02', 'Cabanatuan City', 'Male', 2.5, 46, NULL, 'B+', 'Filipino', 3),
+(8, 'Joey', 'Garcia', 'Villanueva', '2025-03-02', 'Cabanatuan City', 'Male', 7, 65, NULL, 'B+', 'Filipino', 3),
 (9, 'Mark', 'Garcia', 'Villanueva', '2025-10-10', 'Cabanatuan City', 'Male', 2.5, 55, NULL, 'A+', 'Filipino', 3),
 (10, 'Alyssa', 'Garcia', 'Villanueva', '2025-03-04', 'Cabanatuan City', 'Female', 8, 72, NULL, 'A-', 'Filipino', 3),
-(11, 'Ella', 'Alonzo', 'Ramos', '2025-04-17', 'Cabanatuan City', 'Female', 5.6, 60, NULL, 'A+', 'Filipino', 4),
+(11, 'Ella', 'Alonzo', 'Ramos', '2025-04-17', 'Cabanatuan City', 'Female', 7.6, 65, NULL, 'A+', 'Filipino', 4),
 (12, 'Jonas', 'Alonzo', 'Ramos', '2025-01-29', 'Cabanatuan City', 'Male', 3, 50, NULL, 'B+', 'Filipino', 4),
 (13, 'Paula', 'Alonzo', 'Ramos', '2025-04-21', 'Cabanatuan City', 'Female', 5.8, 59, NULL, 'AB+', 'Filipino', 4),
 (14, 'Rico', 'Dela Rosa', 'Garcia', '2025-03-04', 'Cabanatuan City', 'Male', 6.7, 61, NULL, 'AB+', 'Filipino', 5),
@@ -197,7 +218,10 @@ INSERT INTO `infant_previous_records` (`id`, `infant_id`, `record_date`, `previo
 (32, 32, '2025-10-24', 2.50, 46.00, '', 'Improving'),
 (33, 33, '2025-10-24', 2.50, 46.00, '', 'Improving'),
 (34, 4, '2025-10-24', 11.00, 65.00, '', 'Improving'),
-(35, 4, '2025-10-24', 7.00, 74.00, '', 'Improving');
+(35, 4, '2025-10-24', 7.00, 74.00, '', 'Improving'),
+(36, 8, '2025-10-26', 2.50, 46.00, '', 'Improving'),
+(37, 11, '2025-10-26', 5.60, 60.00, '', 'Improving'),
+(38, 5, '2025-10-26', 6.00, 72.00, '', 'Maintained');
 
 -- --------------------------------------------------------
 
@@ -312,9 +336,6 @@ CREATE TABLE `sms_queue` (
 --
 
 INSERT INTO `sms_queue` (`id`, `vacc_id`, `infant_id`, `phone`, `next_dose_date`, `schedule_time`, `created_at`, `barangay`) VALUES
-(131, 42, 11, '09524430383', '2025-11-26', '08:30:00', '2025-10-26 13:31:02', 'La Purisima'),
-(132, 43, 8, '09925094535', '2026-11-26', '08:30:00', '2025-10-26 13:35:50', 'Bucot'),
-(133, 44, 5, '09695711178', '2026-11-26', '08:30:00', '2025-10-26 13:37:01', 'Betes'),
 (134, 45, 1, '09774759342', '2025-11-26', '08:31:00', '2025-10-26 13:37:49', 'Bibiclat');
 
 -- --------------------------------------------------------
@@ -505,9 +526,9 @@ INSERT INTO `tbl_vaccination_details` (`id`, `infant_id`, `vaccine_name`, `stage
 (36, 33, 'BCG', 'Birth', 'Completed', '2025-10-24 07:27:56', '2025-10-24 07:29:19'),
 (37, 4, 'Hepatitis B (HepB)', 'Birth', 'Completed', '2025-10-24 07:49:32', '2025-10-24 08:02:22'),
 (38, 4, 'Oral Polio Vaccine (1st dose)', '1½ mo', 'Completed', '2025-10-24 07:50:17', '2025-10-24 07:59:46'),
-(42, 11, 'BCG', 'Birth', 'Pending', '2025-10-26 13:31:02', '2025-10-26 13:31:02'),
-(43, 8, 'Hepatitis B (HepB)', 'Birth', 'Pending', '2025-10-26 13:35:50', '2025-10-26 13:35:50'),
-(44, 5, 'BCG', 'Birth', 'Pending', '2025-10-26 13:37:01', '2025-10-26 13:37:01'),
+(42, 11, 'BCG', 'Birth', 'Completed', '2025-10-26 13:31:02', '2025-10-26 14:38:23'),
+(43, 8, 'Hepatitis B (HepB)', 'Birth', 'Completed', '2025-10-26 13:35:50', '2025-10-26 14:28:10'),
+(44, 5, 'BCG', 'Birth', 'Completed', '2025-10-26 13:37:01', '2025-10-26 14:48:58'),
 (45, 1, 'BCG', 'Birth', 'Pending', '2025-10-26 13:37:49', '2025-10-26 13:37:49');
 
 -- --------------------------------------------------------
@@ -572,9 +593,9 @@ INSERT INTO `tbl_vaccination_schedule` (`vacc_id`, `infant_id`, `infant_name`, `
 (36, 33, NULL, 'BCG', NULL, '2025-10-24', '2025-11-24', '08:30:00', 'Completed', '', '2025-10-24 07:27:56', 'Bibiclat', NULL),
 (37, 4, NULL, 'Hepatitis B (HepB)', NULL, '2025-10-24', '2025-11-24', '08:48:00', 'Completed', '', '2025-10-24 07:49:32', 'Bibiclat', NULL),
 (38, 4, NULL, 'Oral Polio Vaccine (1st dose)', NULL, '2025-10-24', '2025-11-24', '08:00:00', 'Completed', '', '2025-10-24 07:50:17', 'Bibiclat', NULL),
-(42, 11, NULL, 'BCG', NULL, '2025-10-26', '2025-11-26', '08:30:00', 'Pending', '', '2025-10-26 13:31:02', 'La Purisima', NULL),
-(43, 8, NULL, 'Hepatitis B (HepB)', NULL, '2025-10-26', '2026-11-26', '08:30:00', 'Pending', '', '2025-10-26 13:35:50', 'Bucot', NULL),
-(44, 5, NULL, 'BCG', NULL, '2025-10-26', '2026-11-26', '08:30:00', 'Pending', '', '2025-10-26 13:37:01', 'Betes', NULL),
+(42, 11, NULL, 'BCG', NULL, '2025-10-26', '2025-11-26', '08:30:00', 'Completed', '', '2025-10-26 13:31:02', 'La Purisima', NULL),
+(43, 8, NULL, 'Hepatitis B (HepB)', NULL, '2025-10-26', '2026-11-26', '08:30:00', 'Completed', '', '2025-10-26 13:35:50', 'Bucot', NULL),
+(44, 5, NULL, 'BCG', NULL, '2025-10-26', '2026-11-26', '08:30:00', 'Completed', '', '2025-10-26 13:37:01', 'Betes', NULL),
 (45, 1, NULL, 'BCG', NULL, '2025-10-26', '2025-11-26', '08:31:00', 'Pending', '', '2025-10-26 13:37:49', 'Bibiclat', NULL);
 
 -- --------------------------------------------------------
@@ -665,7 +686,8 @@ INSERT INTO `users` (`id`, `email`, `password`, `name`, `created_at`, `usersname
 (26, 'angelito@gmail', '$2y$10$PVv7fS2dySoKKSMQADzNzOQBcA3Lx7mVF3TkNHBlD3iWvu0eCrPwO', 'angelito cunanan', '2025-10-24', 0, 'parent'),
 (27, 'justine@gmail.com', '$2y$10$zWr61Gqw0E.fgwmdoHC/2ebT9FklnFJq4.Uj/6dGnxq6f7cKOZ53y', 'Justine Sarmiento', '2025-10-26', 0, 'parent'),
 (28, 'Noelizaann@gmail.com', '$2y$10$c/DL7ZciKySEmmei8ntnbuBbz39jUbz/YUl6a946ACqAsLuIir9Ti', 'Noeliza Bombio', '2025-10-26', 0, 'parent'),
-(29, 'rayver@gmail.com', '$2y$10$KAPDBnHBHci69nHmC3pn3uIq9Kymy0xQ4uSwwqtwM8nptEXIBp7Ly', 'Rayver Viernes', '2025-10-26', 0, 'parent');
+(29, 'rayver@gmail.com', '$2y$10$KAPDBnHBHci69nHmC3pn3uIq9Kymy0xQ4uSwwqtwM8nptEXIBp7Ly', 'Rayver Viernes', '2025-10-26', 0, 'parent'),
+(30, 'try@gmail.com', '$2y$10$tTagYjwoAtAq0LsGNdK0DeQqfkBHvgPJ9VeYZF8o3jwbEixG9nsm2', 'try', '2025-10-26', 0, 'healthworker');
 
 -- --------------------------------------------------------
 
@@ -706,7 +728,10 @@ INSERT INTO `user_logins` (`id`, `user_id`, `email`, `ip_address`, `success`, `r
 (16, 25, 'andrew@gmail.com', '::1', 1, 'Login successful', '2025-10-24 14:47:40'),
 (17, 1, 'admin@gmail.com', '::1', 1, 'Login successful', '2025-10-24 15:18:14'),
 (18, 1, 'admin@gmail.com', '::1', 1, 'Login successful', '2025-10-24 21:03:42'),
-(19, 1, 'admin@gmail.com', '::1', 1, 'Login successful', '2025-10-26 19:14:31');
+(19, 1, 'admin@gmail.com', '::1', 1, 'Login successful', '2025-10-26 19:14:31'),
+(20, 30, 'try@gmail.com', '::1', 1, 'Login successful', '2025-10-26 22:58:53'),
+(21, 1, 'admin@gmail.com', '::1', 1, 'Login successful', '2025-10-27 19:56:18'),
+(22, 1, 'admin@gmail.com', '::1', 1, 'Login successful', '2025-10-27 21:23:13');
 
 --
 -- Indexes for dumped tables
@@ -717,6 +742,13 @@ INSERT INTO `user_logins` (`id`, `user_id`, `email`, `ip_address`, `success`, `r
 --
 ALTER TABLE `growth_reference`
   ADD PRIMARY KEY (`id`);
+
+--
+-- Indexes for table `healthworker`
+--
+ALTER TABLE `healthworker`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `user_id` (`user_id`);
 
 --
 -- Indexes for table `infantinfo`
@@ -814,6 +846,12 @@ ALTER TABLE `growth_reference`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=40;
 
 --
+-- AUTO_INCREMENT for table `healthworker`
+--
+ALTER TABLE `healthworker`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT for table `infantinfo`
 --
 ALTER TABLE `infantinfo`
@@ -823,7 +861,7 @@ ALTER TABLE `infantinfo`
 -- AUTO_INCREMENT for table `infant_previous_records`
 --
 ALTER TABLE `infant_previous_records`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=36;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=39;
 
 --
 -- AUTO_INCREMENT for table `laboratory`
@@ -883,17 +921,23 @@ ALTER TABLE `tbl_vaccine_reference`
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `id` int(100) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=30;
+  MODIFY `id` int(100) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=42;
 
 --
 -- AUTO_INCREMENT for table `user_logins`
 --
 ALTER TABLE `user_logins`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=20;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=23;
 
 --
 -- Constraints for dumped tables
 --
+
+--
+-- Constraints for table `healthworker`
+--
+ALTER TABLE `healthworker`
+  ADD CONSTRAINT `healthworker_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `infantinfo`

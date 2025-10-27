@@ -1,6 +1,7 @@
 <?php
 session_start();
 include 'dbForm.php'; // Ensure this file contains the database connection
+$barangays = include __DIR__ . '/config/barangays.php';
 $role = $_SESSION['user']['role'] ?? '';
 $userEmail = $_SESSION['user']['email'] ?? '';
 
@@ -149,48 +150,92 @@ if (isset($_GET['deleteid'])) {
 
 // Handle health worker registration
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['register_healthworker'])) {
-    $name = $_POST['name'];
-    $email = $_POST['email'];
-    $password = $_POST['password'];
-    $confirmPassword = $_POST['confirm_password'];
+    $firstname = trim($_POST['firstname'] ?? '');
+    $middlename = trim($_POST['middlename'] ?? '');
+    $lastname = trim($_POST['lastname'] ?? '');
+    $email = trim($_POST['email'] ?? '');
+    $gender = $_POST['gender'] ?? '';
+    $address = trim($_POST['address'] ?? '');
+    $contactNumber = trim($_POST['contact_number'] ?? '');
+    $barangayAssigned = $_POST['barangay_assigned'] ?? '';
+    $licenseNumber = trim($_POST['license_number'] ?? '');
+    $position = trim($_POST['position'] ?? '');
+    $password = $_POST['password'] ?? '';
+    $confirmPassword = $_POST['confirm_password'] ?? '';
 
-    if ($password !== $confirmPassword) {
-        echo "<script>
-        Swal.fire({
-            title: 'Error!',
-            text: 'Passwords do not match.',
-            icon: 'error'
-        });
-        </script>";
+    $alertScript = function (string $message, string $icon = 'error') {
+        echo "<script>Swal.fire({title: 'Error!', text: " . json_encode($message) . ", icon: '" . $icon . "'});</script>";
+    };
+
+    if ($firstname === '' || $lastname === '') {
+        $alertScript('Please provide the health worker\'s first and last name.');
+    } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        $alertScript('Please enter a valid email address.');
+    } elseif (!in_array($gender, ['Male', 'Female', 'Other'], true)) {
+        $alertScript('Please select a valid gender option.');
+    } elseif ($barangayAssigned === '' || !in_array($barangayAssigned, $barangays ?? [], true)) {
+        $alertScript('Please select a valid barangay assignment.');
+    } elseif ($password !== $confirmPassword) {
+        $alertScript('Passwords do not match.');
     } else {
+        $firstnameEsc = mysqli_real_escape_string($con, $firstname);
+        $middlenameEsc = mysqli_real_escape_string($con, $middlename);
+        $lastnameEsc = mysqli_real_escape_string($con, $lastname);
+        $emailEsc = mysqli_real_escape_string($con, $email);
+        $genderEsc = mysqli_real_escape_string($con, $gender);
+        $addressEsc = mysqli_real_escape_string($con, $address);
+        $contactEsc = mysqli_real_escape_string($con, $contactNumber);
+        $barangayEsc = mysqli_real_escape_string($con, $barangayAssigned);
+        $licenseEsc = mysqli_real_escape_string($con, $licenseNumber);
+        $positionEsc = mysqli_real_escape_string($con, $position);
         $hashedPassword = password_hash($password, PASSWORD_BCRYPT);
-        $role = 'healthworker';
+        $hashedPasswordEsc = mysqli_real_escape_string($con, $hashedPassword);
+        $roleValue = 'healthworker';
+        $roleEsc = mysqli_real_escape_string($con, $roleValue);
+        $fullName = trim($firstname . ' ' . ($middlename !== '' ? $middlename . ' ' : '') . $lastname);
+        $fullNameEsc = mysqli_real_escape_string($con, $fullName);
 
-        // Include created_at column with NOW() function
-        $registerQuery = "INSERT INTO users (name, email, password, role, created_at) VALUES ('$name', '$email', '$hashedPassword', '$role', NOW())";
-        $registerResult = mysqli_query($con, $registerQuery);
+        $existingUserQuery = "SELECT id FROM users WHERE email = '$emailEsc' LIMIT 1";
+        $existingUserResult = mysqli_query($con, $existingUserQuery);
 
-        if ($registerResult) {
-            echo "<script>
-            document.addEventListener('DOMContentLoaded', function() {
-                Swal.fire({
-                    title: 'Success!',
-                    text: 'Health worker registered successfully.',
-                    icon: 'success',
-                    confirmButtonText: 'OK'
-                }).then(() => {
-                    window.location.href = 'dashboard.php';
-                });
-            });
-            </script>";
+        if ($existingUserResult && mysqli_num_rows($existingUserResult) > 0) {
+            $alertScript('Email is already registered.');
         } else {
-            echo "<script>
-            Swal.fire({
-                title: 'Error!',
-                text: 'Failed to register health worker.',
-                icon: 'error'
-            });
-            </script>";
+            $registerQuery = "INSERT INTO users (name, email, password, role, created_at) VALUES ('$fullNameEsc', '$emailEsc', '$hashedPasswordEsc', '$roleEsc', NOW())";
+            $registerResult = mysqli_query($con, $registerQuery);
+
+            if ($registerResult) {
+                $userId = mysqli_insert_id($con);
+                $middlenameValue = $middlename !== '' ? "'$middlenameEsc'" : 'NULL';
+                $addressValue = $address !== '' ? "'$addressEsc'" : 'NULL';
+                $contactValue = $contactNumber !== '' ? "'$contactEsc'" : 'NULL';
+                $licenseValue = $licenseNumber !== '' ? "'$licenseEsc'" : 'NULL';
+                $positionValue = $position !== '' ? "'$positionEsc'" : 'NULL';
+
+                $healthWorkerQuery = "INSERT INTO healthworker (user_id, firstname, middlename, lastname, gender, address, contact_number, barangay_assigned, license_number, position)
+                    VALUES ($userId, '$firstnameEsc', $middlenameValue, '$lastnameEsc', '$genderEsc', $addressValue, $contactValue, '$barangayEsc', $licenseValue, $positionValue)";
+                $healthWorkerResult = mysqli_query($con, $healthWorkerQuery);
+
+                if ($healthWorkerResult) {
+                    echo "<script>
+                    document.addEventListener('DOMContentLoaded', function() {
+                        Swal.fire({
+                            title: 'Success!',
+                            text: 'Health worker registered successfully.',
+                            icon: 'success',
+                            confirmButtonText: 'OK'
+                        }).then(() => {
+                            window.location.href = 'dashboard.php';
+                        });
+                    });
+                    </script>";
+                } else {
+                    mysqli_query($con, "DELETE FROM users WHERE id = $userId");
+                    $alertScript('Failed to save health worker details. Please try again.');
+                }
+            } else {
+                $alertScript('Failed to register health worker. Please try again.');
+            }
         }
     }
 }
@@ -378,6 +423,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['register_healthworker
                     <div class="row g-3 mb-4">
                         <div class="col-12 d-flex align-items-end justify-content-end gap-2 quick-actions flex-wrap">
                             <a href="login_logs.php" class="btn btn-outline-success"><i class="bi bi-journal-check"></i>View Login Logs</a>
+                            <?php if (in_array($role, ['admin', 'healthworker'], true)): ?>
+                                <a href="healthworker.php" class="btn btn-outline-primary">
+                                    <i class="bi bi-people"></i> View Health Workers
+                                </a>
+                            <?php endif; ?>
                             <?php if ($role === 'admin'): ?>
                                 <a href="update_growth.php" class="btn btn-outline-info"><i class="bi bi-activity"></i>Growth Tracking</a>
                                 <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#registerHealthWorkerModal">
@@ -531,7 +581,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['register_healthworker
 
         <?php if ($role === 'admin'): ?>
             <div class="modal fade" id="registerHealthWorkerModal" tabindex="-1" aria-labelledby="registerHealthWorkerModalLabel" aria-hidden="true">
-                <div class="modal-dialog">
+                <div class="modal-dialog modal-lg">
                     <div class="modal-content">
                         <div class="modal-header">
                             <h5 class="modal-title" id="registerHealthWorkerModalLabel">Register Health Worker</h5>
@@ -539,23 +589,69 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['register_healthworker
                         </div>
                         <div class="modal-body">
                             <form method="POST" action="">
-                                <div class="mb-3">
-                                    <label for="name" class="form-label">Name</label>
-                                    <input type="text" class="form-control" id="name" name="name" required>
+                                <div class="row g-3">
+                                    <div class="col-md-4">
+                                        <label for="firstname" class="form-label">First Name</label>
+                                        <input type="text" class="form-control" id="firstname" name="firstname" required>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label for="middlename" class="form-label">Middle Name</label>
+                                        <input type="text" class="form-control" id="middlename" name="middlename">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label for="lastname" class="form-label">Last Name</label>
+                                        <input type="text" class="form-control" id="lastname" name="lastname" required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="email" class="form-label">Email</label>
+                                        <input type="email" class="form-control" id="email" name="email" required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="contact_number" class="form-label">Contact Number</label>
+                                        <input type="text" class="form-control" id="contact_number" name="contact_number" required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="gender" class="form-label">Gender</label>
+                                        <select class="form-select" id="gender" name="gender" required>
+                                            <option value="" selected disabled>Select gender</option>
+                                            <option value="Male">Male</option>
+                                            <option value="Female">Female</option>
+                                            <option value="Other">Other</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="barangay_assigned" class="form-label">Barangay Assigned</label>
+                                        <select class="form-select" id="barangay_assigned" name="barangay_assigned" required>
+                                            <option value="" selected disabled>Select barangay</option>
+                                            <?php foreach (($barangays ?? []) as $barangay): ?>
+                                                <option value="<?php echo htmlspecialchars($barangay); ?>"><?php echo htmlspecialchars($barangay); ?></option>
+                                            <?php endforeach; ?>
+                                        </select>
+                                    </div>
+                                    <div class="col-12">
+                                        <label for="address" class="form-label">Address</label>
+                                        <textarea class="form-control" id="address" name="address" rows="2" placeholder="Street / Sitio, Barangay, Municipality" required></textarea>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="license_number" class="form-label">License Number</label>
+                                        <input type="text" class="form-control" id="license_number" name="license_number">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="position" class="form-label">Position</label>
+                                        <input type="text" class="form-control" id="position" name="position">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="password" class="form-label">Password</label>
+                                        <input type="password" class="form-control" id="password" name="password" required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="confirm_password" class="form-label">Confirm Password</label>
+                                        <input type="password" class="form-control" id="confirm_password" name="confirm_password" required>
+                                    </div>
                                 </div>
-                                <div class="mb-3">
-                                    <label for="email" class="form-label">Email</label>
-                                    <input type="email" class="form-control" id="email" name="email" required>
+                                <div class="mt-3 text-end">
+                                    <button type="submit" name="register_healthworker" class="btn btn-success">Register</button>
                                 </div>
-                                <div class="mb-3">
-                                    <label for="password" class="form-label">Password</label>
-                                    <input type="password" class="form-control" id="password" name="password" required>
-                                </div>
-                                <div class="mb-3">
-                                    <label for="confirm_password" class="form-label">Confirm Password</label>
-                                    <input type="password" class="form-control" id="confirm_password" name="confirm_password" required>
-                                </div>
-                                <button type="submit" name="register_healthworker" class="btn btn-success">Register</button>
                             </form>
                         </div>
                     </div>

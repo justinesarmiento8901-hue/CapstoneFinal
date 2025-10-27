@@ -1,4 +1,6 @@
 <?php
+session_start();
+
 include 'dbForm.php'; // Include database connection file
 
 if (isset($_GET['parent_id'])) {
@@ -40,13 +42,14 @@ if (isset($_GET['parent_id'])) {
                 foreach ($stages as $refStage) {
                     $statusMap[$refVaccine][$refStage] = [
                         'status' => 'N/A',
-                        'updated_at' => ''
+                        'updated_at' => '',
+                        'vaccinated_by' => ''
                     ];
                 }
             }
             $historyRows = [];
             $scheduledStages = [];
-            $scheduleQuery = "SELECT vaccine_name, stage, status FROM tbl_vaccination_schedule WHERE infant_id = $infantId";
+            $scheduleQuery = "SELECT vaccine_name, stage, status, vaccinatedby FROM tbl_vaccination_schedule WHERE infant_id = $infantId";
             $scheduleResult = mysqli_query($con, $scheduleQuery);
             if ($scheduleResult) {
                 while ($scheduleRow = mysqli_fetch_assoc($scheduleResult)) {
@@ -66,7 +69,8 @@ if (isset($_GET['parent_id'])) {
                     $scheduleStatus = ($scheduleRow['status'] === 'Completed') ? 'Completed' : 'Pending';
                     $statusMap[$vacName][$stageName] = [
                         'status' => $scheduleStatus,
-                        'updated_at' => ''
+                        'updated_at' => '',
+                        'vaccinated_by' => $scheduleRow['vaccinatedby'] ?? ''
                     ];
                 }
             }
@@ -120,7 +124,8 @@ if (isset($_GET['parent_id'])) {
                     'disease_prevented' => $referenceRow['disease_prevented'],
                     'stage' => $stage,
                     'status' => $status,
-                    'updated_at' => $detail['updated_at'] ?? ''
+                    'updated_at' => $detail['updated_at'] ?? '',
+                    'vaccinated_by' => $detail['vaccinated_by'] ?? ''
                 ];
             }
             $infantRow['vaccinations'] = $vaccinationDetails;
@@ -250,6 +255,7 @@ if (isset($_GET['parent_id'])) {
                                 <table id="<?php echo htmlspecialchars($tableId); ?>" class="table table-bordered table-striped">
                                     <thead class="table-light">
                                         <tr>
+                                            <th>Vaccinated By</th>
                                             <th>Vaccine</th>
                                             <th>Stage</th>
                                             <th>Status</th>
@@ -268,6 +274,7 @@ if (isset($_GET['parent_id'])) {
                                             }
                                             ?>
                                             <tr>
+                                                <td><?php echo htmlspecialchars($record['vaccinated_by'] !== '' ? $record['vaccinated_by'] : '—'); ?></td>
                                                 <td><?php echo htmlspecialchars($record['vaccine_name']); ?></td>
                                                 <td><?php echo htmlspecialchars($record['stage']); ?></td>
                                                 <td><span class="badge <?php echo $statusClass; ?>"><?php echo htmlspecialchars($record['status']); ?></span></td>
@@ -396,15 +403,15 @@ if (isset($_GET['parent_id'])) {
                         doc.text(title, 40, 40);
                         doc.setFontSize(11);
                         doc.text('Generated: ' + formattedTimestamp, 40, 60);
-                        var headers = [['Vaccine', 'Stage', 'Status', 'Date Complete']];
+                        var headers = [['Vaccinated By', 'Vaccine', 'Stage', 'Status', 'Date Complete']];
                         var bodyRows = Array.from(table.querySelectorAll('tbody tr')).map(function (row) {
                             var cells = Array.from(row.querySelectorAll('td')).map(function (cell) {
                                 return cell.innerText;
                             });
-                            while (cells.length < 4) {
+                            while (cells.length < 5) {
                                 cells.push('');
                             }
-                            return cells.slice(0, 4);
+                            return cells.slice(0, 5);
                         });
                         doc.autoTable({
                             head: headers,
@@ -467,7 +474,7 @@ if (isset($_GET['parent_id'])) {
                     } catch (err) {
                         historyEntries = [];
                     }
-                    var headerRow = ['Vaccine', 'Stage', 'Status', 'Date Complete'];
+                    var headerRow = ['Vaccinated By', 'Vaccine', 'Stage', 'Status', 'Date Complete'];
                     var csvRows = [
                         ['Report Title', title],
                         ['Generated On', formattedTimestamp],

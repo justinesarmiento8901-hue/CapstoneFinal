@@ -399,6 +399,10 @@ if (is_readable($barangayConfig)) {
                             <input type="text" class="form-control" id="vaccGrowthVaccineName" readonly>
                         </div>
                         <div class="mb-3">
+                            <label class="form-label">Vaccinated By</label>
+                            <input type="text" class="form-control" id="vaccGrowthVaccinatedBy" readonly>
+                        </div>
+                        <div class="mb-3">
                             <label class="form-label">Sex</label>
                             <input type="text" class="form-control" id="vaccGrowthSex" readonly>
                         </div>
@@ -785,6 +789,7 @@ if (is_readable($barangayConfig)) {
                 $('#vaccGrowthInfantId').val(pendingInfantId);
                 $('#vaccGrowthInfantName').val(checkbox.data('infant-name') || '');
                 $('#vaccGrowthVaccineName').val(checkbox.data('vaccine-name') || '');
+                $('#vaccGrowthVaccinatedBy').val('');
                 $('#vaccGrowthSex').val('');
                 $('#vaccGrowthWeightMin').val('');
                 $('#vaccGrowthWeightMax').val('');
@@ -819,6 +824,7 @@ if (is_readable($barangayConfig)) {
                             return;
                         }
                         var data = resp.data;
+                        $('#vaccGrowthVaccinatedBy').val(data.vaccinated_by || '--');
                         $('#vaccGrowthSex').val(data.sex || '--');
                         $('#vaccGrowthWeightMin').val(data.weight_min || '--');
                         $('#vaccGrowthWeightMax').val(data.weight_max || '--');

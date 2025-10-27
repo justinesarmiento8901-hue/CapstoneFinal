@@ -1,4 +1,6 @@
 <?php
+session_start();
+
 include 'dbForm.php';
 require_once __DIR__ . '/lib/GrowthHelpers.php';
 
@@ -22,6 +24,25 @@ if (!$infantStmt) {
     $response['message'] = 'Failed to prepare infant query.';
     echo json_encode($response);
     exit;
+}
+
+$healthWorkerFullName = '';
+$userSession = $_SESSION['user'] ?? null;
+if ($userSession && ($userSession['role'] ?? '') === 'healthworker') {
+    $healthWorkerUserId = (int) ($userSession['id'] ?? 0);
+    if ($healthWorkerUserId > 0) {
+        $hwStmt = $con->prepare('SELECT TRIM(CONCAT_WS(" ", firstname, middlename, lastname)) AS full_name FROM healthworker WHERE user_id = ? LIMIT 1');
+        if ($hwStmt) {
+            $hwStmt->bind_param('i', $healthWorkerUserId);
+            $hwStmt->execute();
+            $hwResult = $hwStmt->get_result();
+            if ($hwResult && $hwResult->num_rows > 0) {
+                $hwRow = $hwResult->fetch_assoc();
+                $healthWorkerFullName = $hwRow['full_name'] ?? '';
+            }
+            $hwStmt->close();
+        }
+    }
 }
 
 $infantStmt->bind_param('i', $infantId);
@@ -98,7 +119,8 @@ $response['data'] = [
     'current_weight' => $currentWeightFormatted,
     'current_height' => $currentHeightFormatted,
     'status_label' => $statusLabel,
-    'classification' => $classification
+    'classification' => $classification,
+    'vaccinated_by' => $healthWorkerFullName
 ];
 
 echo json_encode($response);
