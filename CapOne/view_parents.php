@@ -2,6 +2,23 @@
 session_start(); // Ensure session is started
 include 'dbForm.php'; // Include database connection file
 
+function logAudit(mysqli $con, ?int $userId, string $action, string $entityTable, int $entityId, string $description): void
+{
+    $stmt = $con->prepare(
+        'INSERT INTO audit_logs (user_id, action, entity_table, entity_id, description, ip_address) VALUES (?, ?, ?, ?, ?, ?)'
+    );
+
+    if (!$stmt) {
+        error_log('Failed to prepare audit log statement: ' . $con->error);
+        return;
+    }
+
+    $ipAddress = $_SERVER['REMOTE_ADDR'] ?? null;
+    $stmt->bind_param('ississ', $userId, $action, $entityTable, $entityId, $description, $ipAddress);
+    $stmt->execute();
+    $stmt->close();
+}
+
 $role = $_SESSION['user']['role'] ?? '';
 $showDeleteButton = ($role === 'admin');
 
@@ -20,10 +37,15 @@ if (isset($_GET['deleteid'])) {
     $result = mysqli_query($con, $sql);
     if ($result) {
         // Log deletion
-        $logAction = "Deleted parent record with ID $id";
-        $userIP = $_SERVER['REMOTE_ADDR'];
-        $logQuery = "INSERT INTO logs_del_edit (action, user_ip) VALUES ('$logAction', '$userIP')";
-        mysqli_query($con, $logQuery);
+        $entityId = (int) $id;
+        logAudit(
+            $con,
+            $_SESSION['user']['id'] ?? null,
+            'delete',
+            'parents',
+            $entityId,
+            "Deleted parent record with ID $entityId"
+        );
 
         echo "<script>
         Swal.fire({
@@ -61,10 +83,15 @@ if (isset($_POST['update_submit'])) {
     $result = mysqli_query($con, $sql);
     if ($result) {
         // Log update
-        $logAction = "Updated parent record with ID $id";
-        $userIP = $_SERVER['REMOTE_ADDR'];
-        $logQuery = "INSERT INTO logs_del_edit (action, user_ip) VALUES ('$logAction', '$userIP')";
-        mysqli_query($con, $logQuery);
+        $entityId = (int) $id;
+        logAudit(
+            $con,
+            $_SESSION['user']['id'] ?? null,
+            'edit',
+            'parents',
+            $entityId,
+            "Updated parent record with ID $entityId"
+        );
 
         echo "<script>
         Swal.fire({

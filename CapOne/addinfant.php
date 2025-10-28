@@ -2,6 +2,25 @@
 session_start();
 include 'dbForm.php';
 
+if (!function_exists('logAudit')) {
+    function logAudit(mysqli $con, ?int $userId, string $action, string $entityTable, int $entityId, string $description): void
+    {
+        $stmt = $con->prepare(
+            'INSERT INTO audit_logs (user_id, action, entity_table, entity_id, description, ip_address) VALUES (?, ?, ?, ?, ?, ?)'
+        );
+
+        if (!$stmt) {
+            error_log('Failed to prepare audit log statement: ' . $con->error);
+            return;
+        }
+
+        $ipAddress = $_SERVER['REMOTE_ADDR'] ?? null;
+        $stmt->bind_param('ississ', $userId, $action, $entityTable, $entityId, $description, $ipAddress);
+        $stmt->execute();
+        $stmt->close();
+    }
+}
+
 // Debug session role
 error_log("Session Role: " . (isset($_SESSION['user']['role']) ? $_SESSION['user']['role'] : 'Not Set'));
 
@@ -52,6 +71,16 @@ if (isset($_POST['submit'])) {
     $result = mysqli_query($con, $sql);
 
     if ($result) {
+        $newInfantId = mysqli_insert_id($con);
+        logAudit(
+            $con,
+            $_SESSION['user']['id'] ?? null,
+            'add',
+            'infantinfo',
+            (int) $newInfantId,
+            "Added infant record with ID $newInfantId"
+        );
+
         echo "<script>
             document.addEventListener('DOMContentLoaded', function() {
                 Swal.fire({

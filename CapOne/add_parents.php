@@ -1,6 +1,26 @@
 <?php
 include 'dbForm.php';
 session_start();
+
+if (!function_exists('logAudit')) {
+    function logAudit(mysqli $con, ?int $userId, string $action, string $entityTable, int $entityId, string $description): void
+    {
+        $stmt = $con->prepare(
+            'INSERT INTO audit_logs (user_id, action, entity_table, entity_id, description, ip_address) VALUES (?, ?, ?, ?, ?, ?)'
+        );
+
+        if (!$stmt) {
+            error_log('Failed to prepare audit log statement: ' . $con->error);
+            return;
+        }
+
+        $ipAddress = $_SERVER['REMOTE_ADDR'] ?? null;
+        $stmt->bind_param('ississ', $userId, $action, $entityTable, $entityId, $description, $ipAddress);
+        $stmt->execute();
+        $stmt->close();
+    }
+}
+
 $role = $_SESSION['user']['role'] ?? '';
 $barangays = [];
 $barangayConfig = __DIR__ . '/config/barangays.php';
@@ -10,6 +30,61 @@ if (is_readable($barangayConfig)) {
         $barangays = $loadedBarangays;
     }
 }
+
+$purokOptions = [
+    'Purok 1',
+    'Purok 2',
+    'Purok 3',
+    'Purok 4',
+    'Purok 5',
+    'Purok 6',
+    'Purok 7'
+];
+
+$municipalities = [
+    'Aliaga',
+    'Bongabon',
+    'Cabiao',
+    'Carranglan',
+    'Gabaldon',
+    'General Mamerto Natividad',
+    'General Tinio',
+    'Guimba',
+    'Jaen',
+    'Laur',
+    'Licab',
+    'Llanera',
+    'Lupao',
+    'Nampicuan',
+    'Pantabangan',
+    'Peñaranda',
+    'Quezon',
+    'Rizal',
+    'San Antonio',
+    'San Isidro',
+    'San Leonardo',
+    'Santa Rosa',
+    'Santo Domingo',
+    'Talavera',
+    'Talugtug',
+    'Zaragoza',
+    'Cabanatuan City',
+    'Gapan City',
+    'Science City of Muñoz',
+    'Palayan City',
+    'San Jose City'
+];
+
+$provinceOptions = [
+    'Aurora',
+    'Bataan',
+    'Bulacan',
+    'Nueva Ecija',
+    'Pampanga',
+    'Tarlac',
+    'Zambales'
+];
+
 if (isset($_POST['submit'])) {
     $first_name = trim($_POST['first_name'] ?? '');
     $last_name = trim($_POST['last_name'] ?? '');
@@ -17,25 +92,51 @@ if (isset($_POST['submit'])) {
     $email = trim($_POST['email'] ?? '');
     $address = trim($_POST['address'] ?? '');
     $barangay = trim($_POST['barangay'] ?? '');
+    $purok = trim($_POST['purok'] ?? '');
+    $municipality = trim($_POST['municipality'] ?? '');
+    $province = trim($_POST['province'] ?? '');
 
-    if ($barangay === '') {
+    if (!in_array($barangay, $barangays, true)) {
+        $barangay = '';
+    }
+    if (!in_array($purok, $purokOptions, true)) {
+        $purok = '';
+    }
+    if (!in_array($municipality, $municipalities, true)) {
+        $municipality = '';
+    }
+    if (!in_array($province, $provinceOptions, true)) {
+        $province = '';
+    }
+
+    if ($barangay === '' || $purok === '' || $municipality === '' || $province === '') {
         echo "<script>
             document.addEventListener('DOMContentLoaded', function() {
                 Swal.fire({
                     title: 'Error!',
-                    text: 'Please select a barangay.',
+                    text: 'Please select a barangay, purok, municipality, and province.',
                     icon: 'error',
                     confirmButtonText: 'OK'
                 });
             });
         </script>";
     } else {
-        $stmt = $con->prepare("INSERT INTO parents (first_name, last_name, phone, email, address, barangay) VALUES (?, ?, ?, ?, ?, ?)");
-        $stmt->bind_param('ssssss', $first_name, $last_name, $phone, $email, $address, $barangay);
+        $stmt = $con->prepare("INSERT INTO parents (first_name, last_name, phone, email, address, barangay, purok, Municipality, Province) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+        $stmt->bind_param('sssssssss', $first_name, $last_name, $phone, $email, $address, $barangay, $purok, $municipality, $province);
 
         if ($stmt->execute()) {
             $newParentId = $stmt->insert_id;
             $stmt->close();
+
+            // Log creation in audit trail
+            logAudit(
+                $con,
+                $_SESSION['user']['id'] ?? null,
+                'add',
+                'parents',
+                (int) $newParentId,
+                "Added parent record with ID $newParentId"
+            );
 
             // Also create a corresponding users account with role 'parent' if missing
             $fullName = mysqli_real_escape_string($con, trim($first_name . ' ' . $last_name));
@@ -181,6 +282,36 @@ if (isset($_POST['submit'])) {
                         </select>
                     </div>
 
+                    <div class="col-md-6">
+                        <label for="purok" class="form-label">Purok</label>
+                        <select class="form-select" name="purok" required>
+                            <option value="">-- Select Purok --</option>
+                            <?php foreach ($purokOptions as $purokOption): ?>
+                                <option value="<?php echo htmlspecialchars($purokOption); ?>"><?php echo htmlspecialchars($purokOption); ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label for="municipality" class="form-label">Municipality</label>
+                        <select class="form-select" name="municipality" required>
+                            <option value="">-- Select Municipality --</option>
+                            <?php foreach ($municipalities as $municipalityOption): ?>
+                                <option value="<?php echo htmlspecialchars($municipalityOption); ?>"><?php echo htmlspecialchars($municipalityOption); ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label for="province" class="form-label">Province</label>
+                        <select class="form-select" name="province" required>
+                            <option value="">-- Select Province --</option>
+                            <?php foreach ($provinceOptions as $provinceOption): ?>
+                                <option value="<?php echo htmlspecialchars($provinceOption); ?>"><?php echo htmlspecialchars($provinceOption); ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+
                     <div class="col-12">
                         <label for="address" class="form-label">Address</label>
                         <textarea class="form-control" name="address" rows="3" placeholder="Enter address"></textarea>
@@ -228,6 +359,12 @@ if (isset($_POST['submit'])) {
         (function() {
             const tableBody = document.getElementById('new-parents-table-body');
             const resetButton = document.getElementById('clear-new-parents');
+            const barangaySelect = document.querySelector('select[name="barangay"]');
+            const purokSelect = document.querySelector('select[name="purok"]');
+            const municipalitySelect = document.querySelector('select[name="municipality"]');
+            const provinceSelect = document.querySelector('select[name="province"]');
+            const addressField = document.querySelector('textarea[name="address"]');
+            let addressDirty = false;
 
             function createPlaceholderRow() {
                 const row = document.createElement('tr');
@@ -236,6 +373,42 @@ if (isset($_POST['submit'])) {
                 row.innerHTML = '<td colspan="3">No parent added in this session yet.</td>';
                 return row;
             }
+
+            function buildAddress() {
+                const parts = [
+                    barangaySelect?.value || '',
+                    purokSelect?.value || '',
+                    municipalitySelect?.value || '',
+                    provinceSelect?.value || ''
+                ].filter(Boolean);
+                return parts.join(', ');
+            }
+
+            function updateAddressIfClean() {
+                if (!addressField || addressDirty) {
+                    return;
+                }
+                addressField.value = buildAddress();
+            }
+
+            function attachAutoFill(selectEl) {
+                if (!selectEl) {
+                    return;
+                }
+                selectEl.addEventListener('change', updateAddressIfClean);
+            }
+
+            if (addressField) {
+                addressField.addEventListener('input', function() {
+                    addressDirty = addressField.value.trim().length > 0 && addressField.value !== buildAddress();
+                });
+            }
+
+            attachAutoFill(barangaySelect);
+            attachAutoFill(purokSelect);
+            attachAutoFill(municipalitySelect);
+            attachAutoFill(provinceSelect);
+            updateAddressIfClean();
 
             window.addParentRow = function(data) {
                 if (!tableBody) {

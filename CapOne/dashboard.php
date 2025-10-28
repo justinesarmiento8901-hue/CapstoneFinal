@@ -292,7 +292,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['register_healthworker
         <?php if ($role !== 'parent'): ?>
             <div class="card card-shadow mb-4">
                 <div class="card-header bg-white border-0 py-3">
-                    <h3 class="dashboard-title text-primary"><i class="bi bi-speedometer2"></i>Admin Dashboard</h3>
+                    <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
+                        <h3 class="dashboard-title text-primary mb-0"><i class="bi bi-speedometer2"></i> Admin Dashboard</h3>
+                    </div>
                 </div>
                 <div class="card-body">
                     <div class="row g-3 mb-4">
@@ -435,9 +437,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['register_healthworker
                                 <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#registerHealthWorkerModal">
                                     <i class="bi bi-person-plus"></i>Register Health Worker
                                 </button>
-                                <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#manageUsersModal">
-                                    <i class="bi bi-people"></i>Manage Users
-                                </button>
+                                <div class="btn-group flex-wrap" role="group" aria-label="Admin quick actions">
+                                    <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#manageUsersModal">
+                                        <i class="bi bi-people"></i>Manage Users
+                                    </button>
+                                    <a href="edit_del_viewlogs.php" class="btn btn-outline-secondary">
+                                        <i class="bi bi-clipboard-data"></i>Audit Trail
+                                    </a>
+                                </div>
                             <?php endif; ?>
                         </div>
                     </div>
