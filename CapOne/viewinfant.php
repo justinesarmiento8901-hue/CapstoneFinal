@@ -2,11 +2,11 @@
 session_start(); // ensure this is at the top if not already included
 include 'dbForm.php';
 
-// Check if the logged-in user is an admin
-$showDeleteButton = isset($_SESSION['user']['role']) && $_SESSION['user']['role'] === 'admin';
+$role = $_SESSION['user']['role'] ?? '';
+$showDeleteButton = ($role === 'admin');
 
 // Check if the logged-in user is a parent
-$isParent = isset($_SESSION['user']['role']) && $_SESSION['user']['role'] === 'parent';
+$isParent = ($role === 'parent');
 $parentEmail = ($isParent && isset($_SESSION['user']['email'])) ? mysqli_real_escape_string($con, $_SESSION['user']['email']) : null;
 
 ?>
@@ -16,8 +16,13 @@ $parentEmail = ($isParent && isset($_SESSION['user']['email'])) ? mysqli_real_es
 <?php
 // SYNTAX FOR DELETING INFANT INFORMATION
 if (isset($_GET['deleteid'])) {
+    if (!$showDeleteButton) {
+        header('Location: viewinfant.php');
+        exit();
+    }
+
     $id = $_GET['deleteid'];
-    $sql = "DELETE FROM infantinfo WHERE id = '$id'";
+    $sql = "DELETE FROM infantinfo WHERE id = '" . mysqli_real_escape_string($con, $id) . "'";
     $result = mysqli_query($con, $sql);
     if ($result) {
         // ✅ LOGGING DELETION

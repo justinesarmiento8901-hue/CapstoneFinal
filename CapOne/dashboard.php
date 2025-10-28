@@ -409,16 +409,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['register_healthworker
                                 </div>
                             </a>
                         </div>
-                        <div class="col-md-4">
-                            <a href="vaccination_period_report.php" class="summary-card summary-reports d-block text-decoration-none h-100">
-                                <div class="summary-icon"><i class="bi bi-clipboard-data"></i></div>
-                                <div>
-                                    <p class="summary-label mb-2">Vaccination Reports</p>
-                                    <p class="text-muted small mb-1">Generate coverage by barangay and schedule period.</p>
-                                    <p class="mb-0 fw-semibold text-primary">View Report &raquo;</p>
-                                </div>
-                            </a>
-                        </div>
+                        <?php if ($role === 'admin'): ?>
+                            <div class="col-md-4">
+                                <a href="vaccination_period_report.php" class="summary-card summary-reports d-block text-decoration-none h-100">
+                                    <div class="summary-icon"><i class="bi bi-clipboard-data"></i></div>
+                                    <div>
+                                        <p class="summary-label mb-2">Vaccination Reports</p>
+                                        <p class="text-muted small mb-1">Generate coverage by barangay and schedule period.</p>
+                                        <p class="mb-0 fw-semibold text-primary">View Report &raquo;</p>
+                                    </div>
+                                </a>
+                            </div>
+                        <?php endif; ?>
                     </div>
                     <div class="row g-3 mb-4">
                         <div class="col-12 d-flex align-items-end justify-content-end gap-2 quick-actions flex-wrap">

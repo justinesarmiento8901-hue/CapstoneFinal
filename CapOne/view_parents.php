@@ -2,15 +2,20 @@
 session_start(); // Ensure session is started
 include 'dbForm.php'; // Include database connection file
 
-// Check if the logged-in user is an admin
-$showDeleteButton = isset($_SESSION['user']['role']) && $_SESSION['user']['role'] === 'admin';
+$role = $_SESSION['user']['role'] ?? '';
+$showDeleteButton = ($role === 'admin');
 
-$isParent = isset($_SESSION['user']['role']) && $_SESSION['user']['role'] === 'parent';
+$isParent = ($role === 'parent');
 $parentEmail = ($isParent && isset($_SESSION['user']['email'])) ? mysqli_real_escape_string($con, $_SESSION['user']['email']) : null;
 
 // Handle deletion
 if (isset($_GET['deleteid'])) {
-    $id = $_GET['deleteid'];
+    if (!$showDeleteButton) {
+        header('Location: view_parents.php');
+        exit();
+    }
+
+    $id = mysqli_real_escape_string($con, $_GET['deleteid']);
     $sql = "DELETE FROM parents WHERE id = '$id'";
     $result = mysqli_query($con, $sql);
     if ($result) {
