@@ -293,7 +293,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['register_healthworker
             <div class="card card-shadow mb-4">
                 <div class="card-header bg-white border-0 py-3">
                     <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
-                        <h3 class="dashboard-title text-primary mb-0"><i class="bi bi-speedometer2"></i> Admin Dashboard</h3>
+                        <h3 class="dashboard-title text-primary mb-0"><i class="bi bi-speedometer2"></i> Dashboard</h3>
                     </div>
                 </div>
                 <div class="card-body">
@@ -376,7 +376,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['register_healthworker
                         </div>
                     </div>
                     <div class="row g-3 mb-4 align-items-stretch">
-                        <div class="col-md-3">
+                        <div class="col-sm-6 col-lg-4">
                             <div class="summary-card summary-infants h-100">
                                 <div class="summary-icon"><i class="bi bi-calendar-event"></i></div>
                                 <div>
@@ -385,26 +385,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['register_healthworker
                                 </div>
                             </div>
                         </div>
-                        <div class="col-md-5">
+                        <div class="col-sm-6 col-lg-4">
                             <a href="newly_added_parents.php" class="summary-card summary-parents d-block text-decoration-none h-100">
                                 <div class="summary-icon"><i class="bi bi-person-plus"></i></div>
                                 <div>
                                     <p class="summary-label mb-2">New Parents Overview</p>
                                     <div class="row g-2 text-center small">
                                         <div class="col-6">
-                                            <p class="mb-1 text-muted">Last 30 Days</p>
+                                            <p class="mb-1 summary-subtext">Last 30 Days</p>
                                             <h5 class="summary-value mb-0"><?php echo $newParentsRecentCount; ?></h5>
                                         </div>
                                         <div class="col-6">
-                                            <p class="mb-1 text-muted">Today</p>
+                                            <p class="mb-1 summary-subtext">Today</p>
                                             <h5 class="summary-value mb-0"><?php echo $newParentsTodayCount; ?></h5>
                                         </div>
                                         <div class="col-6">
-                                            <p class="mb-1 text-muted">This Week</p>
+                                            <p class="mb-1 summary-subtext">This Week</p>
                                             <h5 class="summary-value mb-0"><?php echo $newParentsWeekCount; ?></h5>
                                         </div>
                                         <div class="col-6">
-                                            <p class="mb-1 text-muted">This Month</p>
+                                            <p class="mb-1 summary-subtext">This Month</p>
                                             <h5 class="summary-value mb-0"><?php echo $newParentsMonthCount; ?></h5>
                                         </div>
                                     </div>
@@ -412,41 +412,77 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['register_healthworker
                             </a>
                         </div>
                         <?php if ($role === 'admin'): ?>
-                            <div class="col-md-4">
+                            <div class="col-sm-6 col-lg-4">
                                 <a href="vaccination_period_report.php" class="summary-card summary-reports d-block text-decoration-none h-100">
                                     <div class="summary-icon"><i class="bi bi-clipboard-data"></i></div>
                                     <div>
                                         <p class="summary-label mb-2">Vaccination Reports</p>
-                                        <p class="text-muted small mb-1">Generate coverage by barangay and schedule period.</p>
-                                        <p class="mb-0 fw-semibold text-primary">View Report &raquo;</p>
+                                        <p class="summary-subtext mb-1">Generate coverage by barangay and schedule period.</p>
+                                        <p class="summary-link mb-0">View Report &raquo;</p>
                                     </div>
                                 </a>
                             </div>
                         <?php endif; ?>
                     </div>
-                    <div class="row g-3 mb-4">
-                        <div class="col-12 d-flex align-items-end justify-content-end gap-2 quick-actions flex-wrap">
-                            <a href="login_logs.php" class="btn btn-outline-success"><i class="bi bi-journal-check"></i>View Login Logs</a>
-                            <?php if (in_array($role, ['admin', 'healthworker'], true)): ?>
-                                <a href="healthworker.php" class="btn btn-outline-primary">
-                                    <i class="bi bi-people"></i> View Health Workers
-                                </a>
-                            <?php endif; ?>
-                            <?php if ($role === 'admin'): ?>
-                                <a href="update_growth.php" class="btn btn-outline-info"><i class="bi bi-activity"></i>Growth Tracking</a>
-                                <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#registerHealthWorkerModal">
-                                    <i class="bi bi-person-plus"></i>Register Health Worker
-                                </button>
-                                <div class="btn-group flex-wrap" role="group" aria-label="Admin quick actions">
-                                    <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#manageUsersModal">
-                                        <i class="bi bi-people"></i>Manage Users
-                                    </button>
-                                    <a href="edit_del_viewlogs.php" class="btn btn-outline-secondary">
-                                        <i class="bi bi-clipboard-data"></i>Audit Trail
-                                    </a>
+                    <div class="row g-3 mb-4 quick-actions">
+                        <div class="col-sm-6 col-lg-4 col-xl-3">
+                            <a href="login_logs.php" class="summary-card summary-logs d-block text-decoration-none h-100">
+                                <div class="summary-icon"><i class="bi bi-journal-check"></i></div>
+                                <div>
+                                    <p class="summary-label mb-1">Login Logs</p>
+                                    <p class="summary-text mb-0">Review system access history.</p>
                                 </div>
-                            <?php endif; ?>
+                            </a>
                         </div>
+                        <?php if (in_array($role, ['admin', 'healthworker'], true)): ?>
+                            <div class="col-sm-6 col-lg-4 col-xl-3">
+                                <a href="healthworker.php" class="summary-card summary-healthworkers d-block text-decoration-none h-100">
+                                    <div class="summary-icon"><i class="bi bi-people"></i></div>
+                                    <div>
+                                        <p class="summary-label mb-1">Health Workers</p>
+                                        <p class="summary-text mb-0">Manage assigned staff details.</p>
+                                    </div>
+                                </a>
+                            </div>
+                        <?php endif; ?>
+                        <?php if ($role === 'admin'): ?>
+                            <div class="col-sm-6 col-lg-4 col-xl-3">
+                                <a href="update_growth.php" class="summary-card summary-growth d-block text-decoration-none h-100">
+                                    <div class="summary-icon"><i class="bi bi-activity"></i></div>
+                                    <div>
+                                        <p class="summary-label mb-1">Growth Tracking</p>
+                                        <p class="summary-text mb-0">Update infant measurements.</p>
+                                    </div>
+                                </a>
+                            </div>
+                            <div class="col-sm-6 col-lg-4 col-xl-3">
+                                <a href="javascript:void(0)" class="summary-card summary-register d-block text-decoration-none h-100" data-bs-toggle="modal" data-bs-target="#registerHealthWorkerModal">
+                                    <div class="summary-icon"><i class="bi bi-person-plus"></i></div>
+                                    <div>
+                                        <p class="summary-label mb-1">Register Worker</p>
+                                        <p class="summary-text mb-0">Add new health personnel.</p>
+                                    </div>
+                                </a>
+                            </div>
+                            <div class="col-sm-6 col-lg-4 col-xl-3">
+                                <a href="javascript:void(0)" class="summary-card summary-manage d-block text-decoration-none h-100" data-bs-toggle="modal" data-bs-target="#manageUsersModal">
+                                    <div class="summary-icon"><i class="bi bi-people-fill"></i></div>
+                                    <div>
+                                        <p class="summary-label mb-1">Manage Users</p>
+                                        <p class="summary-text mb-0">Modify system user accounts.</p>
+                                    </div>
+                                </a>
+                            </div>
+                            <div class="col-sm-6 col-lg-4 col-xl-3">
+                                <a href="edit_del_viewlogs.php" class="summary-card summary-audit d-block text-decoration-none h-100">
+                                    <div class="summary-icon"><i class="bi bi-clipboard-data"></i></div>
+                                    <div>
+                                        <p class="summary-label mb-1">Audit Trail</p>
+                                        <p class="summary-text mb-0">View activity history logs.</p>
+                                    </div>
+                                </a>
+                            </div>
+                        <?php endif; ?>
                     </div>
                     <div class="table-responsive table-modern">
                         <h5 class="section-heading"><i class="bi bi-clock-history"></i>Upcoming Appointments</h5>
