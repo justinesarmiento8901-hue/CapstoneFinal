@@ -32,7 +32,7 @@ $result = $con->query($query);
 <body class="bg-light">
     <div class="container py-4">
         <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
-            <h3 class="mb-0"><i class="bi bi-clipboard-data"></i> Audit Trail (Add/Edit/Delete/View)</h3>
+            <h3 class="mb-0"><i class="bi bi-clipboard-data"></i> Audit Trail</h3>
             <a href="dashboard.php" class="btn btn-outline-secondary">
                 <i class="bi bi-arrow-left"></i> Back to Dashboard
             </a>
