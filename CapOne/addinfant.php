@@ -137,7 +137,7 @@ if (isset($_POST['submit'])) {
         <?php endif; ?>
         <a href="view_parents.php"><i class="bi bi-people"></i> Parent Records</a>
         <a href="viewinfant.php"><i class="bi bi-journal-medical"></i> Infant Records</a>
-        <?php if ($role === 'admin'): ?>
+        <?php if ($role === 'admin' || $role === 'healthworker'): ?>
             <a href="update_growth.php"><i class="bi bi-activity"></i> Growth Tracking</a>
         <?php endif; ?>
         <a href="account_settings.php"><i class="bi bi-gear"></i> Account Settings</a>
@@ -146,9 +146,10 @@ if (isset($_POST['submit'])) {
             <?php if (in_array($role, ['admin', 'report'], true)): ?>
                 <a href="generate_report.php"><i class="bi bi-clipboard-data"></i> Reports</a>
             <?php endif; ?>
-
             <a href="sms.php"><i class="bi bi-chat-dots"></i> SMS Management</a>
-            <a href="login_logs.php"><i class="bi bi-clipboard-data"></i> Logs</a>
+            <?php if ($role === 'admin'): ?>
+                <a href="login_logs.php"><i class="bi bi-clipboard-data"></i> Logs</a>
+            <?php endif; ?>
         <?php endif; ?>
         <a href="logout.php"><i class="bi bi-box-arrow-right"></i> Logout</a>
     </div>
@@ -158,16 +159,16 @@ if (isset($_POST['submit'])) {
             <div class="card card-shadow p-4">
                 <h3 class="dashboard-title mb-4"><i class="bi bi-clipboard-plus"></i>Infant Information Form</h3>
 
-            <?php if (isset($_SESSION['user']['role']) && $_SESSION['user']['role'] === 'parent'): ?>
-                <?php
-                $resolved_parent_id = $parent_info['parent_id'] ?? 0;
-                $resolved_parent_name = $parent_info['parent_name'] ?? 'Parent';
-                ?>
-                <div class="alert alert-info">
-                    Logged-in Parent: <strong><?php echo htmlspecialchars($resolved_parent_name); ?></strong><br>
-                    <small>Parent ID: <?php echo htmlspecialchars($resolved_parent_id); ?></small>
-                </div>
-            <?php endif; ?>
+                <?php if (isset($_SESSION['user']['role']) && $_SESSION['user']['role'] === 'parent'): ?>
+                    <?php
+                    $resolved_parent_id = $parent_info['parent_id'] ?? 0;
+                    $resolved_parent_name = $parent_info['parent_name'] ?? 'Parent';
+                    ?>
+                    <div class="alert alert-info">
+                        Logged-in Parent: <strong><?php echo htmlspecialchars($resolved_parent_name); ?></strong><br>
+                        <small>Parent ID: <?php echo htmlspecialchars($resolved_parent_id); ?></small>
+                    </div>
+                <?php endif; ?>
 
                 <form method="POST" class="row g-3">
                     <div class="col-12 position-relative">

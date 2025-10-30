@@ -153,7 +153,7 @@ if (isset($_POST['new_submit'])) {
             <a href="view_parents.php"><i class="bi bi-people"></i> Parent Records</a>
         <?php endif; ?>
         <a href="viewinfant.php" class="active"><i class="bi bi-journal-medical"></i> Infant Records</a>
-        <?php if (!$isParent && isset($_SESSION['user']['role']) && $_SESSION['user']['role'] === 'admin'): ?>
+        <?php if ($role === 'admin' || $role === 'healthworker'): ?>
             <a href="update_growth.php"><i class="bi bi-activity"></i> Growth Tracking</a>
         <?php endif; ?>
         <a href="account_settings.php"><i class="bi bi-gear"></i> Account Settings</a>
@@ -163,7 +163,9 @@ if (isset($_POST['new_submit'])) {
                 <a href="generate_report.php"><i class="bi bi-clipboard-data"></i> Reports</a>
             <?php endif; ?>
             <a href="sms.php"><i class="bi bi-chat-dots"></i> SMS Management</a>
-            <a href="login_logs.php"><i class="bi bi-clipboard-data"></i> Logs</a>
+            <?php if ($role === 'admin'): ?>
+                <a href="login_logs.php"><i class="bi bi-clipboard-data"></i> Logs</a>
+            <?php endif; ?>
         <?php endif; ?>
         <a href="logout.php"><i class="bi bi-box-arrow-right"></i> Logout</a>
     </div>
@@ -186,165 +188,165 @@ if (isset($_POST['new_submit'])) {
                     <div class="table-modern table-modern-elevated">
                         <div class="table-responsive">
                             <table class="table table-hover align-middle mb-0">
-                            <thead>
-                                <tr>
-                                    <th scope="col">#</th>
-                                    <th scope="col">Full Name</th>
-                                    <th scope="col">Date of Birth</th>
-                                    <th scope="col">Place of Birth</th>
-                                    <th scope="col">Sex</th>
-                                    <th scope="col">Weight</th>
-                                    <th scope="col">Height</th>
-                                    <th scope="col">BloodType</th>
-                                    <th scope="col">Nationality</th>
-                                    <th scope="col">Action</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                        <?php
-                        // FOR VIEWING INFANT INFORMATION
+                                <thead>
+                                    <tr>
+                                        <th scope="col">#</th>
+                                        <th scope="col">Full Name</th>
+                                        <th scope="col">Date of Birth</th>
+                                        <th scope="col">Place of Birth</th>
+                                        <th scope="col">Sex</th>
+                                        <th scope="col">Weight</th>
+                                        <th scope="col">Height</th>
+                                        <th scope="col">BloodType</th>
+                                        <th scope="col">Nationality</th>
+                                        <th scope="col">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php
+                                    // FOR VIEWING INFANT INFORMATION
 
-                        // $sql = "SELECT * FROM infantinfo";
-                        $search = (!$isParent && isset($_GET['search'])) ? mysqli_real_escape_string($con, $_GET['search']) : '';
+                                    // $sql = "SELECT * FROM infantinfo";
+                                    $search = (!$isParent && isset($_GET['search'])) ? mysqli_real_escape_string($con, $_GET['search']) : '';
 
-                        if ($isParent && $parentEmail) {
-                            // Resolve parent id from email
-                            $parentRes = mysqli_query($con, "SELECT id FROM parents WHERE email = '$parentEmail' LIMIT 1");
-                            $parentIdFilter = 0;
-                            if ($parentRes && mysqli_num_rows($parentRes) > 0) {
-                                $parentRow = mysqli_fetch_assoc($parentRes);
-                                $parentIdFilter = intval($parentRow['id']);
-                            }
-                            if (!empty($search)) {
-                                $sql = "SELECT * FROM infantinfo WHERE parent_id = '$parentIdFilter' AND (
+                                    if ($isParent && $parentEmail) {
+                                        // Resolve parent id from email
+                                        $parentRes = mysqli_query($con, "SELECT id FROM parents WHERE email = '$parentEmail' LIMIT 1");
+                                        $parentIdFilter = 0;
+                                        if ($parentRes && mysqli_num_rows($parentRes) > 0) {
+                                            $parentRow = mysqli_fetch_assoc($parentRes);
+                                            $parentIdFilter = intval($parentRow['id']);
+                                        }
+                                        if (!empty($search)) {
+                                            $sql = "SELECT * FROM infantinfo WHERE parent_id = '$parentIdFilter' AND (
                                     id LIKE '%$search%' OR
                                     firstname LIKE '%$search%' OR 
                                     middlename LIKE '%$search%' OR 
                                     surname LIKE '%$search%' OR 
                                     placeofbirth LIKE '%$search%')";
-                            } else {
-                                $sql = "SELECT * FROM infantinfo WHERE parent_id = '$parentIdFilter'";
-                            }
-                        } else {
-                            if (!empty($search)) {
-                                $sql = "SELECT * FROM infantinfo WHERE 
+                                        } else {
+                                            $sql = "SELECT * FROM infantinfo WHERE parent_id = '$parentIdFilter'";
+                                        }
+                                    } else {
+                                        if (!empty($search)) {
+                                            $sql = "SELECT * FROM infantinfo WHERE 
                                     id LIKE '%$search%' OR
                                     firstname LIKE '%$search%' OR 
                                     middlename LIKE '%$search%' OR 
                                     surname LIKE '%$search%' OR 
                                     placeofbirth LIKE '%$search%'";
-                            } else {
-                                $sql = "SELECT * FROM infantinfo";
-                            }
-                        }
+                                        } else {
+                                            $sql = "SELECT * FROM infantinfo";
+                                        }
+                                    }
 
-                        $result = mysqli_query($con, $sql);
-                        if ($result) {
-                            while ($row = mysqli_fetch_assoc($result)) {
-                                $id = $row['id'];
-                                $firstname = $row['firstname'];
-                                $middlename = $row['middlename'];
-                                $surname = $row['surname'];
-                                $fullName = trim(preg_replace('/\s+/', ' ', $firstname . ' ' . ($middlename ?? '') . ' ' . $surname));
-                                $dateofbirth = $row['dateofbirth'];
-                                $placeofbirth = $row['placeofbirth'];
-                                $sex = $row['sex'];
-                                $weight = $row['weight'];
-                                $height = $row['height'];
-                                $bloodtype = $row['bloodtype'];
-                                $nationality = $row['nationality'];
-                                $parentIdForInfant = isset($row['parent_id']) ? (int) $row['parent_id'] : 0;
-                                $viewDetailsUrl = 'view_details.php?parent_id=' . $parentIdForInfant;
-                                ?>
+                                    $result = mysqli_query($con, $sql);
+                                    if ($result) {
+                                        while ($row = mysqli_fetch_assoc($result)) {
+                                            $id = $row['id'];
+                                            $firstname = $row['firstname'];
+                                            $middlename = $row['middlename'];
+                                            $surname = $row['surname'];
+                                            $fullName = trim(preg_replace('/\s+/', ' ', $firstname . ' ' . ($middlename ?? '') . ' ' . $surname));
+                                            $dateofbirth = $row['dateofbirth'];
+                                            $placeofbirth = $row['placeofbirth'];
+                                            $sex = $row['sex'];
+                                            $weight = $row['weight'];
+                                            $height = $row['height'];
+                                            $bloodtype = $row['bloodtype'];
+                                            $nationality = $row['nationality'];
+                                            $parentIdForInfant = isset($row['parent_id']) ? (int) $row['parent_id'] : 0;
+                                            $viewDetailsUrl = 'view_details.php?parent_id=' . $parentIdForInfant;
+                                    ?>
 
-                                <tr>
-                                    <th scope="row"><?php echo $id; ?></th>
-                                    <td><?php echo $fullName; ?></td>
-                                    <td><?php echo $dateofbirth; ?></td>
-                                    <td><?php echo $placeofbirth; ?></td>
-                                    <td><?php echo $sex; ?></td>
-                                    <td><?php echo $weight; ?></td>
-                                    <td><?php echo $height; ?></td>
-                                    <td><?php echo $bloodtype; ?></td>
-                                    <td><?php echo $nationality; ?></td>
-                                    <td class="d-flex gap-1 justify-content-center action-icons">
-                                        <a href="<?php echo htmlspecialchars($viewDetailsUrl); ?>" class="btn btn-outline-info btn-sm" title="View Details">
-                                            <i class="bi bi-eye"></i>
-                                        </a>
-                                        <?php if (!$isParent): ?>
-                                            <button class="btn btn-outline-success btn-sm" data-bs-toggle="modal" data-bs-target="#formModal_<?php echo $id; ?>" title="Edit"><i class="bi bi-pencil-square"></i></button>
-                                            <?php if ($showDeleteButton): ?>
-                                                <button type="button" class="btn btn-outline-danger btn-sm" onclick="confirmDelete(<?php echo $id; ?>)" title="Delete"><i class="bi bi-trash"></i></button>
-                                            <?php endif; ?>
-                                        <?php endif; ?>
-                                    </td>
-                                </tr>
+                                            <tr>
+                                                <th scope="row"><?php echo $id; ?></th>
+                                                <td><?php echo $fullName; ?></td>
+                                                <td><?php echo $dateofbirth; ?></td>
+                                                <td><?php echo $placeofbirth; ?></td>
+                                                <td><?php echo $sex; ?></td>
+                                                <td><?php echo $weight; ?></td>
+                                                <td><?php echo $height; ?></td>
+                                                <td><?php echo $bloodtype; ?></td>
+                                                <td><?php echo $nationality; ?></td>
+                                                <td class="d-flex gap-1 justify-content-center action-icons">
+                                                    <a href="<?php echo htmlspecialchars($viewDetailsUrl); ?>" class="btn btn-outline-info btn-sm" title="View Details">
+                                                        <i class="bi bi-eye"></i>
+                                                    </a>
+                                                    <?php if (!$isParent): ?>
+                                                        <button class="btn btn-outline-success btn-sm" data-bs-toggle="modal" data-bs-target="#formModal_<?php echo $id; ?>" title="Edit"><i class="bi bi-pencil-square"></i></button>
+                                                        <?php if ($showDeleteButton): ?>
+                                                            <button type="button" class="btn btn-outline-danger btn-sm" onclick="confirmDelete(<?php echo $id; ?>)" title="Delete"><i class="bi bi-trash"></i></button>
+                                                        <?php endif; ?>
+                                                    <?php endif; ?>
+                                                </td>
+                                            </tr>
 
-                                <!-- Modal for EDIT -->
-                                <div class="modal fade" id="formModal_<?php echo $id; ?>" tabindex="-1" aria-labelledby="formModalLabel_<?php echo $id; ?>" aria-hidden="true">
-                                    <div class="modal-dialog">
-                                        <div class="modal-content">
-                                            <div class="modal-header">
-                                                <h5 class="modal-title text-primary" id="formModalLabel_<?php echo $id; ?>">Edit Infant Information</h5>
-                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                            </div>
-                                            <div class="modal-body">
-                                                <form method="POST" action="viewinfant.php">
-                                                    <input type="hidden" name="new_id" value="<?php echo $id; ?>">
-
-                                                    <div class="mb-3">
-                                                        <label class="form-label">First Name</label>
-                                                        <input type="text" class="form-control" name="new_firstname" value="<?php echo $firstname; ?>" required>
-                                                    </div>
-                                                    <div class="mb-3">
-                                                        <label class="form-label">Middle Name</label>
-                                                        <input type="text" class="form-control" name="new_middle" value="<?php echo $middlename; ?>">
-                                                    </div>
-                                                    <div class="mb-3">
-                                                        <label class="form-label">Surname</label>
-                                                        <input type="text" class="form-control" name="new_surname" value="<?php echo $surname; ?>" required>
-                                                    </div>
-                                                    <div class="mb-3">
-                                                        <label class="form-label">Date of Birth</label>
-                                                        <input type="date" class="form-control" name="new_dateofbirth" value="<?php echo $dateofbirth; ?>" required>
-                                                    </div>
-                                                    <div class="mb-3">
-                                                        <label class="form-label">Place of Birth</label>
-                                                        <input type="text" class="form-control" name="new_birthplace" value="<?php echo $placeofbirth; ?>">
-                                                    </div>
-                                                    <div class="mb-3">
-                                                        <label class="form-label">Nationality</label>
-                                                        <input type="text" class="form-control" name="new_nationality" value="<?php echo $nationality; ?>">
-                                                    </div>
-                                                    <div class="row mb-3">
-                                                        <div class="col-md-6">
-                                                            <label class="form-label">Weight (kg)</label>
-                                                            <input type="number" class="form-control" name="new_weight" value="<?php echo $weight; ?>" step="0.01" required>
+                                            <!-- Modal for EDIT -->
+                                            <div class="modal fade" id="formModal_<?php echo $id; ?>" tabindex="-1" aria-labelledby="formModalLabel_<?php echo $id; ?>" aria-hidden="true">
+                                                <div class="modal-dialog">
+                                                    <div class="modal-content">
+                                                        <div class="modal-header">
+                                                            <h5 class="modal-title text-primary" id="formModalLabel_<?php echo $id; ?>">Edit Infant Information</h5>
+                                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                                                         </div>
-                                                        <div class="col-md-6">
-                                                            <label class="form-label">Height (cm)</label>
-                                                            <input type="number" class="form-control" name="new_height" value="<?php echo $height; ?>" step="0.1" required>
+                                                        <div class="modal-body">
+                                                            <form method="POST" action="viewinfant.php">
+                                                                <input type="hidden" name="new_id" value="<?php echo $id; ?>">
+
+                                                                <div class="mb-3">
+                                                                    <label class="form-label">First Name</label>
+                                                                    <input type="text" class="form-control" name="new_firstname" value="<?php echo $firstname; ?>" required>
+                                                                </div>
+                                                                <div class="mb-3">
+                                                                    <label class="form-label">Middle Name</label>
+                                                                    <input type="text" class="form-control" name="new_middle" value="<?php echo $middlename; ?>">
+                                                                </div>
+                                                                <div class="mb-3">
+                                                                    <label class="form-label">Surname</label>
+                                                                    <input type="text" class="form-control" name="new_surname" value="<?php echo $surname; ?>" required>
+                                                                </div>
+                                                                <div class="mb-3">
+                                                                    <label class="form-label">Date of Birth</label>
+                                                                    <input type="date" class="form-control" name="new_dateofbirth" value="<?php echo $dateofbirth; ?>" required>
+                                                                </div>
+                                                                <div class="mb-3">
+                                                                    <label class="form-label">Place of Birth</label>
+                                                                    <input type="text" class="form-control" name="new_birthplace" value="<?php echo $placeofbirth; ?>">
+                                                                </div>
+                                                                <div class="mb-3">
+                                                                    <label class="form-label">Nationality</label>
+                                                                    <input type="text" class="form-control" name="new_nationality" value="<?php echo $nationality; ?>">
+                                                                </div>
+                                                                <div class="row mb-3">
+                                                                    <div class="col-md-6">
+                                                                        <label class="form-label">Weight (kg)</label>
+                                                                        <input type="number" class="form-control" name="new_weight" value="<?php echo $weight; ?>" step="0.01" required>
+                                                                    </div>
+                                                                    <div class="col-md-6">
+                                                                        <label class="form-label">Height (cm)</label>
+                                                                        <input type="number" class="form-control" name="new_height" value="<?php echo $height; ?>" step="0.1" required>
+                                                                    </div>
+                                                                </div>
+
+                                                                <div class="text-center">
+                                                                    <button type="submit" name="new_submit" class="btn btn-primary w-50">Update</button>
+                                                                </div>
+                                                            </form>
                                                         </div>
                                                     </div>
-
-                                                    <div class="text-center">
-                                                        <button type="submit" name="new_submit" class="btn btn-primary w-50">Update</button>
-                                                    </div>
-                                                </form>
+                                                </div>
                                             </div>
-                                        </div>
-                                    </div>
-                                </div>
-                        <?php
-                            } // Close the while loop
-                        } // Close the if block
-                        ?>
-                            </tbody>
-                        </table>
+                                    <?php
+                                        } // Close the while loop
+                                    } // Close the if block
+                                    ?>
+                                </tbody>
+                            </table>
                         </div>
                     </div>
-        </div>
-    </div>
+                </div>
+            </div>
 </body>
 <script>
     function confirmDelete(id) {

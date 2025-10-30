@@ -171,11 +171,11 @@ if (isset($_POST['submit'])) {
             echo "<script>
                 document.addEventListener('DOMContentLoaded', function() {
                     const newParentData = " . json_encode([
-                        'id' => $newParentId,
-                        'email' => $email,
-                        'tempPassword' => $tableTempPassword,
-                        'accountNote' => $accountNote,
-                    ]) . ";
+                'id' => $newParentId,
+                'email' => $email,
+                'tempPassword' => $tableTempPassword,
+                'accountNote' => $accountNote,
+            ]) . ";
                     Swal.fire({
                         title: 'Success!',
                         text: " . json_encode($successMsg) . ",
@@ -233,7 +233,7 @@ if (isset($_POST['submit'])) {
             <a href="view_parents.php"><i class="bi bi-people"></i> Parent Records</a>
         <?php endif; ?>
         <a href="viewinfant.php"><i class="bi bi-journal-medical"></i> Infant Records</a>
-        <?php if ($role === 'admin'): ?>
+        <?php if ($role === 'admin' || $role === 'healthworker'): ?>
             <a href="update_growth.php"><i class="bi bi-activity"></i> Growth Tracking</a>
         <?php endif; ?>
         <a href="account_settings.php"><i class="bi bi-gear"></i> Account Settings</a>
@@ -243,7 +243,9 @@ if (isset($_POST['submit'])) {
                 <a href="generate_report.php"><i class="bi bi-clipboard-data"></i> Reports</a>
             <?php endif; ?>
             <a href="sms.php"><i class="bi bi-chat-dots"></i> SMS Management</a>
-            <a href="login_logs.php"><i class="bi bi-clipboard-data"></i> Logs</a>
+            <?php if ($role === 'admin'): ?>
+                <a href="login_logs.php"><i class="bi bi-clipboard-data"></i> Logs</a>
+            <?php endif; ?>
         <?php endif; ?>
         <a href="logout.php"><i class="bi bi-box-arrow-right"></i> Logout</a>
     </div>

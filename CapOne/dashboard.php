@@ -270,474 +270,475 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['register_healthworker
         <a href="addinfant.php"><i class="bi bi-person-fill-add"></i> Add Infant</a>
         <?php if ($role === 'admin' || $role === 'healthworker'): ?>
             <a href="add_parents.php"><i class="bi bi-person-plus"></i> Add Parent</a>
-            <a href="view_parents.php"><i class="bi bi-people"></i> Parent Records</a>
             <a href="update_growth.php"><i class="bi bi-activity"></i> Growth Tracking</a>
         <?php endif; ?>
+        <a href="view_parents.php"><i class="bi bi-people"></i> Parent Records</a>
         <a href="viewinfant.php"><i class="bi bi-journal-medical"></i> Infant Records</a>
         <a href="account_settings.php"><i class="bi bi-gear"></i> Account Settings</a>
-
         <?php if ($role !== 'parent'): ?>
             <a href="vaccination_schedule.php"><i class="bi bi-journal-medical"></i> Vaccination Schedule</a>
             <?php if (in_array($role, ['admin', 'report'], true)): ?>
                 <a href="generate_report.php"><i class="bi bi-clipboard-data"></i> Reports</a>
             <?php endif; ?>
             <a href="sms.php"><i class="bi bi-chat-dots"></i> SMS Management</a>
-            <a href="login_logs.php"><i class="bi bi-clipboard-data"></i> Logs</a>
+            <?php if ($role === 'admin'): ?>
+                <a href="login_logs.php"><i class="bi bi-clipboard-data"></i> Logs</a>
+            <?php endif; ?>
         <?php endif; ?>
         <a href="logout.php"><i class="bi bi-box-arrow-right"></i> Logout</a>
     </div>
 
     <div class="content-area">
         <div class="container-fluid">
-        <?php if ($role !== 'parent'): ?>
-            <div class="card card-shadow mb-4">
-                <div class="card-header bg-white border-0 py-3">
-                    <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
-                        <h3 class="dashboard-title text-primary mb-0"><i class="bi bi-speedometer2"></i> Dashboard</h3>
-                    </div>
-                </div>
-                <div class="card-body">
-                    <div class="row g-3 mb-4">
-                        <div class="col-md-3">
-                            <?php if ($role === 'admin'): ?>
-                                <a href="viewinfant.php" class="summary-card summary-infants d-block text-decoration-none">
-                                    <div class="summary-icon"><i class="bi bi-people-fill"></i></div>
-                                    <div>
-                                        <p class="summary-label">Total Infants</p>
-                                        <h4 class="summary-value"><?php echo $infantCount; ?></h4>
-                                    </div>
-                                </a>
-                            <?php else: ?>
-                                <div class="summary-card summary-infants">
-                                    <div class="summary-icon"><i class="bi bi-people-fill"></i></div>
-                                    <div>
-                                        <p class="summary-label">Total Infants</p>
-                                        <h4 class="summary-value"><?php echo $infantCount; ?></h4>
-                                    </div>
-                                </div>
-                            <?php endif; ?>
-                        </div>
-                        <div class="col-md-3">
-                            <?php if ($role === 'admin'): ?>
-                                <a href="view_parents.php" class="summary-card summary-parents d-block text-decoration-none">
-                                    <div class="summary-icon"><i class="bi bi-person-bounding-box"></i></div>
-                                    <div>
-                                        <p class="summary-label">Total Parents</p>
-                                        <h4 class="summary-value"><?php echo $parentCount; ?></h4>
-                                    </div>
-                                </a>
-                            <?php else: ?>
-                                <div class="summary-card summary-parents">
-                                    <div class="summary-icon"><i class="bi bi-person-bounding-box"></i></div>
-                                    <div>
-                                        <p class="summary-label">Total Parents</p>
-                                        <h4 class="summary-value"><?php echo $parentCount; ?></h4>
-                                    </div>
-                                </div>
-                            <?php endif; ?>
-                        </div>
-                        <div class="col-md-3">
-                            <?php if ($role === 'admin'): ?>
-                                <a href="vaccination_schedule.php?status=Pending" class="summary-card summary-pending d-block text-decoration-none">
-                                    <div class="summary-icon"><i class="bi bi-exclamation-octagon"></i></div>
-                                    <div>
-                                        <p class="summary-label">Pending Vaccinations</p>
-                                        <h4 class="summary-value"><?php echo $pendingSchedules; ?></h4>
-                                    </div>
-                                </a>
-                            <?php else: ?>
-                                <div class="summary-card summary-pending">
-                                    <div class="summary-icon"><i class="bi bi-exclamation-octagon"></i></div>
-                                    <div>
-                                        <p class="summary-label">Pending Vaccinations</p>
-                                        <h4 class="summary-value"><?php echo $pendingSchedules; ?></h4>
-                                    </div>
-                                </div>
-                            <?php endif; ?>
-                        </div>
-                        <div class="col-md-3">
-                            <?php if ($role === 'admin'): ?>
-                                <a href="vaccination_schedule.php?status=Completed" class="summary-card summary-completed d-block text-decoration-none">
-                                    <div class="summary-icon"><i class="bi bi-check-circle"></i></div>
-                                    <div>
-                                        <p class="summary-label">Completed Vaccinations</p>
-                                        <h4 class="summary-value"><?php echo $completedSchedules; ?></h4>
-                                    </div>
-                                </a>
-                            <?php else: ?>
-                                <div class="summary-card summary-completed">
-                                    <div class="summary-icon"><i class="bi bi-check-circle"></i></div>
-                                    <div>
-                                        <p class="summary-label">Completed Vaccinations</p>
-                                        <h4 class="summary-value"><?php echo $completedSchedules; ?></h4>
-                                    </div>
-                                </div>
-                            <?php endif; ?>
+            <?php if ($role !== 'parent'): ?>
+                <div class="card card-shadow mb-4">
+                    <div class="card-header bg-white border-0 py-3">
+                        <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
+                            <h3 class="dashboard-title text-primary mb-0"><i class="bi bi-speedometer2"></i> Dashboard</h3>
                         </div>
                     </div>
-                    <div class="row g-3 mb-4 align-items-stretch">
-                        <div class="col-sm-6 col-lg-4">
-                            <div class="summary-card summary-infants h-100">
-                                <div class="summary-icon"><i class="bi bi-calendar-event"></i></div>
-                                <div>
-                                    <p class="summary-label">Upcoming Vaccinations</p>
-                                    <h4 class="summary-value"><?php echo $upcomingWeekCount; ?></h4>
-                                </div>
+                    <div class="card-body">
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-3">
+                                <?php if ($role === 'admin'): ?>
+                                    <a href="viewinfant.php" class="summary-card summary-infants d-block text-decoration-none">
+                                        <div class="summary-icon"><i class="bi bi-people-fill"></i></div>
+                                        <div>
+                                            <p class="summary-label">Total Infants</p>
+                                            <h4 class="summary-value"><?php echo $infantCount; ?></h4>
+                                        </div>
+                                    </a>
+                                <?php else: ?>
+                                    <div class="summary-card summary-infants">
+                                        <div class="summary-icon"><i class="bi bi-people-fill"></i></div>
+                                        <div>
+                                            <p class="summary-label">Total Infants</p>
+                                            <h4 class="summary-value"><?php echo $infantCount; ?></h4>
+                                        </div>
+                                    </div>
+                                <?php endif; ?>
+                            </div>
+                            <div class="col-md-3">
+                                <?php if ($role === 'admin'): ?>
+                                    <a href="view_parents.php" class="summary-card summary-parents d-block text-decoration-none">
+                                        <div class="summary-icon"><i class="bi bi-person-bounding-box"></i></div>
+                                        <div>
+                                            <p class="summary-label">Total Parents</p>
+                                            <h4 class="summary-value"><?php echo $parentCount; ?></h4>
+                                        </div>
+                                    </a>
+                                <?php else: ?>
+                                    <div class="summary-card summary-parents">
+                                        <div class="summary-icon"><i class="bi bi-person-bounding-box"></i></div>
+                                        <div>
+                                            <p class="summary-label">Total Parents</p>
+                                            <h4 class="summary-value"><?php echo $parentCount; ?></h4>
+                                        </div>
+                                    </div>
+                                <?php endif; ?>
+                            </div>
+                            <div class="col-md-3">
+                                <?php if ($role === 'admin'): ?>
+                                    <a href="vaccination_schedule.php?status=Pending" class="summary-card summary-pending d-block text-decoration-none">
+                                        <div class="summary-icon"><i class="bi bi-exclamation-octagon"></i></div>
+                                        <div>
+                                            <p class="summary-label">Pending Vaccinations</p>
+                                            <h4 class="summary-value"><?php echo $pendingSchedules; ?></h4>
+                                        </div>
+                                    </a>
+                                <?php else: ?>
+                                    <div class="summary-card summary-pending">
+                                        <div class="summary-icon"><i class="bi bi-exclamation-octagon"></i></div>
+                                        <div>
+                                            <p class="summary-label">Pending Vaccinations</p>
+                                            <h4 class="summary-value"><?php echo $pendingSchedules; ?></h4>
+                                        </div>
+                                    </div>
+                                <?php endif; ?>
+                            </div>
+                            <div class="col-md-3">
+                                <?php if ($role === 'admin'): ?>
+                                    <a href="vaccination_schedule.php?status=Completed" class="summary-card summary-completed d-block text-decoration-none">
+                                        <div class="summary-icon"><i class="bi bi-check-circle"></i></div>
+                                        <div>
+                                            <p class="summary-label">Completed Vaccinations</p>
+                                            <h4 class="summary-value"><?php echo $completedSchedules; ?></h4>
+                                        </div>
+                                    </a>
+                                <?php else: ?>
+                                    <div class="summary-card summary-completed">
+                                        <div class="summary-icon"><i class="bi bi-check-circle"></i></div>
+                                        <div>
+                                            <p class="summary-label">Completed Vaccinations</p>
+                                            <h4 class="summary-value"><?php echo $completedSchedules; ?></h4>
+                                        </div>
+                                    </div>
+                                <?php endif; ?>
                             </div>
                         </div>
-                        <div class="col-sm-6 col-lg-4">
-                            <a href="newly_added_parents.php" class="summary-card summary-parents d-block text-decoration-none h-100">
-                                <div class="summary-icon"><i class="bi bi-person-plus"></i></div>
-                                <div>
-                                    <p class="summary-label mb-2">New Parents Overview</p>
-                                    <div class="row g-2 text-center small">
-                                        <div class="col-6">
-                                            <p class="mb-1 summary-subtext">Last 30 Days</p>
-                                            <h5 class="summary-value mb-0"><?php echo $newParentsRecentCount; ?></h5>
-                                        </div>
-                                        <div class="col-6">
-                                            <p class="mb-1 summary-subtext">Today</p>
-                                            <h5 class="summary-value mb-0"><?php echo $newParentsTodayCount; ?></h5>
-                                        </div>
-                                        <div class="col-6">
-                                            <p class="mb-1 summary-subtext">This Week</p>
-                                            <h5 class="summary-value mb-0"><?php echo $newParentsWeekCount; ?></h5>
-                                        </div>
-                                        <div class="col-6">
-                                            <p class="mb-1 summary-subtext">This Month</p>
-                                            <h5 class="summary-value mb-0"><?php echo $newParentsMonthCount; ?></h5>
-                                        </div>
-                                    </div>
-                                </div>
-                            </a>
-                        </div>
-                        <?php if ($role === 'admin'): ?>
+                        <div class="row g-3 mb-4 align-items-stretch">
                             <div class="col-sm-6 col-lg-4">
-                                <a href="vaccination_period_report.php" class="summary-card summary-reports d-block text-decoration-none h-100">
-                                    <div class="summary-icon"><i class="bi bi-clipboard-data"></i></div>
+                                <div class="summary-card summary-infants h-100">
+                                    <div class="summary-icon"><i class="bi bi-calendar-event"></i></div>
                                     <div>
-                                        <p class="summary-label mb-2">Vaccination Reports</p>
-                                        <p class="summary-subtext mb-1">Generate coverage by barangay and schedule period.</p>
-                                        <p class="summary-link mb-0">View Report &raquo;</p>
+                                        <p class="summary-label">Upcoming Vaccinations</p>
+                                        <h4 class="summary-value"><?php echo $upcomingWeekCount; ?></h4>
                                     </div>
-                                </a>
-                            </div>
-                        <?php endif; ?>
-                    </div>
-                    <div class="row g-3 mb-4 quick-actions">
-                        <div class="col-sm-6 col-lg-4 col-xl-3">
-                            <a href="login_logs.php" class="summary-card summary-logs d-block text-decoration-none h-100">
-                                <div class="summary-icon"><i class="bi bi-journal-check"></i></div>
-                                <div>
-                                    <p class="summary-label mb-1">Login Logs</p>
-                                    <p class="summary-text mb-0">Review system access history.</p>
                                 </div>
-                            </a>
-                        </div>
-                        <?php if (in_array($role, ['admin', 'healthworker'], true)): ?>
-                            <div class="col-sm-6 col-lg-4 col-xl-3">
-                                <a href="healthworker.php" class="summary-card summary-healthworkers d-block text-decoration-none h-100">
-                                    <div class="summary-icon"><i class="bi bi-people"></i></div>
-                                    <div>
-                                        <p class="summary-label mb-1">Health Workers</p>
-                                        <p class="summary-text mb-0">Manage assigned staff details.</p>
-                                    </div>
-                                </a>
                             </div>
-                        <?php endif; ?>
-                        <?php if ($role === 'admin'): ?>
-                            <div class="col-sm-6 col-lg-4 col-xl-3">
-                                <a href="update_growth.php" class="summary-card summary-growth d-block text-decoration-none h-100">
-                                    <div class="summary-icon"><i class="bi bi-activity"></i></div>
-                                    <div>
-                                        <p class="summary-label mb-1">Growth Tracking</p>
-                                        <p class="summary-text mb-0">Update infant measurements.</p>
-                                    </div>
-                                </a>
-                            </div>
-                            <div class="col-sm-6 col-lg-4 col-xl-3">
-                                <a href="javascript:void(0)" class="summary-card summary-register d-block text-decoration-none h-100" data-bs-toggle="modal" data-bs-target="#registerHealthWorkerModal">
+                            <div class="col-sm-6 col-lg-4">
+                                <a href="newly_added_parents.php" class="summary-card summary-parents d-block text-decoration-none h-100">
                                     <div class="summary-icon"><i class="bi bi-person-plus"></i></div>
                                     <div>
-                                        <p class="summary-label mb-1">Register Worker</p>
-                                        <p class="summary-text mb-0">Add new health personnel.</p>
+                                        <p class="summary-label mb-2">New Parents Overview</p>
+                                        <div class="row g-2 text-center small">
+                                            <div class="col-6">
+                                                <p class="mb-1 summary-subtext">Last 30 Days</p>
+                                                <h5 class="summary-value mb-0"><?php echo $newParentsRecentCount; ?></h5>
+                                            </div>
+                                            <div class="col-6">
+                                                <p class="mb-1 summary-subtext">Today</p>
+                                                <h5 class="summary-value mb-0"><?php echo $newParentsTodayCount; ?></h5>
+                                            </div>
+                                            <div class="col-6">
+                                                <p class="mb-1 summary-subtext">This Week</p>
+                                                <h5 class="summary-value mb-0"><?php echo $newParentsWeekCount; ?></h5>
+                                            </div>
+                                            <div class="col-6">
+                                                <p class="mb-1 summary-subtext">This Month</p>
+                                                <h5 class="summary-value mb-0"><?php echo $newParentsMonthCount; ?></h5>
+                                            </div>
+                                        </div>
                                     </div>
                                 </a>
                             </div>
+                            <?php if ($role === 'admin'): ?>
+                                <div class="col-sm-6 col-lg-4">
+                                    <a href="vaccination_period_report.php" class="summary-card summary-reports d-block text-decoration-none h-100">
+                                        <div class="summary-icon"><i class="bi bi-clipboard-data"></i></div>
+                                        <div>
+                                            <p class="summary-label mb-2">Vaccination Reports</p>
+                                            <p class="summary-subtext mb-1">Generate coverage by barangay and schedule period.</p>
+                                            <p class="summary-link mb-0">View Report &raquo;</p>
+                                        </div>
+                                    </a>
+                                </div>
+                            <?php endif; ?>
+                        </div>
+                        <div class="row g-3 mb-4 quick-actions">
                             <div class="col-sm-6 col-lg-4 col-xl-3">
-                                <a href="javascript:void(0)" class="summary-card summary-manage d-block text-decoration-none h-100" data-bs-toggle="modal" data-bs-target="#manageUsersModal">
-                                    <div class="summary-icon"><i class="bi bi-people-fill"></i></div>
+                                <a href="login_logs.php" class="summary-card summary-logs d-block text-decoration-none h-100">
+                                    <div class="summary-icon"><i class="bi bi-journal-check"></i></div>
                                     <div>
-                                        <p class="summary-label mb-1">Manage Users</p>
-                                        <p class="summary-text mb-0">Modify system user accounts.</p>
+                                        <p class="summary-label mb-1">Login Logs</p>
+                                        <p class="summary-text mb-0">Review system access history.</p>
                                     </div>
                                 </a>
                             </div>
-                            <div class="col-sm-6 col-lg-4 col-xl-3">
-                                <a href="edit_del_viewlogs.php" class="summary-card summary-audit d-block text-decoration-none h-100">
-                                    <div class="summary-icon"><i class="bi bi-clipboard-data"></i></div>
-                                    <div>
-                                        <p class="summary-label mb-1">Audit Trail</p>
-                                        <p class="summary-text mb-0">View activity history logs.</p>
-                                    </div>
-                                </a>
-                            </div>
-                        <?php endif; ?>
-                    </div>
-                    <div class="table-responsive table-modern">
-                        <h5 class="section-heading"><i class="bi bi-clock-history"></i>Upcoming Appointments</h5>
-                        <?php if (!empty($upcomingAppointments)): ?>
-                            <table class="table table-hover align-middle">
-                                <thead>
-                                    <tr>
-                                        <th>Infant</th>
-                                        <th>Parent</th>
-                                        <th>Vaccine</th>
-                                        <th>Date</th>
-                                        <th>Time</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <?php foreach ($upcomingAppointments as $appointment): ?>
-                                        <?php
-                                        $dateDisplay = htmlspecialchars($appointment['date_vaccination']);
-                                        $timeDisplay = $appointment['time'] ? date('g:i A', strtotime($appointment['time'])) : 'N/A';
-                                        ?>
+                            <?php if (in_array($role, ['admin', 'healthworker'], true)): ?>
+                                <div class="col-sm-6 col-lg-4 col-xl-3">
+                                    <a href="healthworker.php" class="summary-card summary-healthworkers d-block text-decoration-none h-100">
+                                        <div class="summary-icon"><i class="bi bi-people"></i></div>
+                                        <div>
+                                            <p class="summary-label mb-1">Health Workers</p>
+                                            <p class="summary-text mb-0">Manage assigned staff details.</p>
+                                        </div>
+                                    </a>
+                                </div>
+                            <?php endif; ?>
+                            <?php if ($role === 'admin'): ?>
+                                <div class="col-sm-6 col-lg-4 col-xl-3">
+                                    <a href="update_growth.php" class="summary-card summary-growth d-block text-decoration-none h-100">
+                                        <div class="summary-icon"><i class="bi bi-activity"></i></div>
+                                        <div>
+                                            <p class="summary-label mb-1">Growth Tracking</p>
+                                            <p class="summary-text mb-0">Update infant measurements.</p>
+                                        </div>
+                                    </a>
+                                </div>
+                                <div class="col-sm-6 col-lg-4 col-xl-3">
+                                    <a href="javascript:void(0)" class="summary-card summary-register d-block text-decoration-none h-100" data-bs-toggle="modal" data-bs-target="#registerHealthWorkerModal">
+                                        <div class="summary-icon"><i class="bi bi-person-plus"></i></div>
+                                        <div>
+                                            <p class="summary-label mb-1">Register Worker</p>
+                                            <p class="summary-text mb-0">Add new health personnel.</p>
+                                        </div>
+                                    </a>
+                                </div>
+                                <div class="col-sm-6 col-lg-4 col-xl-3">
+                                    <a href="javascript:void(0)" class="summary-card summary-manage d-block text-decoration-none h-100" data-bs-toggle="modal" data-bs-target="#manageUsersModal">
+                                        <div class="summary-icon"><i class="bi bi-people-fill"></i></div>
+                                        <div>
+                                            <p class="summary-label mb-1">Manage Users</p>
+                                            <p class="summary-text mb-0">Modify system user accounts.</p>
+                                        </div>
+                                    </a>
+                                </div>
+                                <div class="col-sm-6 col-lg-4 col-xl-3">
+                                    <a href="edit_del_viewlogs.php" class="summary-card summary-audit d-block text-decoration-none h-100">
+                                        <div class="summary-icon"><i class="bi bi-clipboard-data"></i></div>
+                                        <div>
+                                            <p class="summary-label mb-1">Audit Trail</p>
+                                            <p class="summary-text mb-0">View activity history logs.</p>
+                                        </div>
+                                    </a>
+                                </div>
+                            <?php endif; ?>
+                        </div>
+                        <div class="table-responsive table-modern">
+                            <h5 class="section-heading"><i class="bi bi-clock-history"></i>Upcoming Appointments</h5>
+                            <?php if (!empty($upcomingAppointments)): ?>
+                                <table class="table table-hover align-middle">
+                                    <thead>
                                         <tr>
-                                            <td><?php echo htmlspecialchars($appointment['infant_name']); ?></td>
-                                            <td><?php echo htmlspecialchars($appointment['parent_name']); ?></td>
-                                            <td><?php echo htmlspecialchars($appointment['vaccine_name']); ?></td>
-                                            <td><?php echo $dateDisplay; ?></td>
-                                            <td><?php echo htmlspecialchars($timeDisplay); ?></td>
+                                            <th>Infant</th>
+                                            <th>Parent</th>
+                                            <th>Vaccine</th>
+                                            <th>Date</th>
+                                            <th>Time</th>
                                         </tr>
-                                    <?php endforeach; ?>
-                                </tbody>
-                            </table>
+                                    </thead>
+                                    <tbody>
+                                        <?php foreach ($upcomingAppointments as $appointment): ?>
+                                            <?php
+                                            $dateDisplay = htmlspecialchars($appointment['date_vaccination']);
+                                            $timeDisplay = $appointment['time'] ? date('g:i A', strtotime($appointment['time'])) : 'N/A';
+                                            ?>
+                                            <tr>
+                                                <td><?php echo htmlspecialchars($appointment['infant_name']); ?></td>
+                                                <td><?php echo htmlspecialchars($appointment['parent_name']); ?></td>
+                                                <td><?php echo htmlspecialchars($appointment['vaccine_name']); ?></td>
+                                                <td><?php echo $dateDisplay; ?></td>
+                                                <td><?php echo htmlspecialchars($timeDisplay); ?></td>
+                                            </tr>
+                                        <?php endforeach; ?>
+                                    </tbody>
+                                </table>
+                            <?php else: ?>
+                                <p class="text-muted mb-0">No upcoming appointments scheduled.</p>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                </div>
+            <?php else: ?>
+                <div class="card card-shadow">
+                    <div class="card-header bg-white border-0 py-3">
+                        <h3 class="dashboard-title text-primary"><i class="bi bi-house-heart"></i>Parent Dashboard</h3>
+                    </div>
+                    <div class="card-body">
+                        <?php if ($parentDataLoaded): ?>
+                            <div class="row g-3 mb-4">
+                                <div class="col-md-4">
+                                    <div class="summary-card summary-infants">
+                                        <div class="summary-icon"><i class="bi bi-people"></i></div>
+                                        <div>
+                                            <p class="summary-label">Children Registered</p>
+                                            <h4 class="summary-value"><?php echo $parentChildrenCount; ?></h4>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="summary-card summary-pending">
+                                        <div class="summary-icon"><i class="bi bi-hourglass-split"></i></div>
+                                        <div>
+                                            <p class="summary-label">Pending Vaccinations</p>
+                                            <h4 class="summary-value"><?php echo $parentPendingCount; ?></h4>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="summary-card summary-completed">
+                                        <div class="summary-icon"><i class="bi bi-shield-check"></i></div>
+                                        <div>
+                                            <p class="summary-label">Completed Vaccinations</p>
+                                            <h4 class="summary-value"><?php echo $parentCompletedCount; ?></h4>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row g-4">
+                                <div class="col-lg-6">
+                                    <div class="table-responsive table-modern panel-upcoming">
+                                        <h5 class="section-heading"><i class="bi bi-calendar-check"></i>Upcoming Vaccinations</h5>
+                                        <?php if (!empty($parentUpcomingAppointments)): ?>
+                                            <table class="table table-hover align-middle">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Child</th>
+                                                        <th>Vaccine</th>
+                                                        <th>Date</th>
+                                                        <th>Time</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <?php foreach ($parentUpcomingAppointments as $appointment): ?>
+                                                        <?php
+                                                        $dateDisplay = htmlspecialchars($appointment['date_vaccination']);
+                                                        $timeDisplay = $appointment['time'] ? date('g:i A', strtotime($appointment['time'])) : 'N/A';
+                                                        ?>
+                                                        <tr>
+                                                            <td><?php echo htmlspecialchars($appointment['infant_name']); ?></td>
+                                                            <td><?php echo htmlspecialchars($appointment['vaccine_name']); ?></td>
+                                                            <td><?php echo $dateDisplay; ?></td>
+                                                            <td><?php echo htmlspecialchars($timeDisplay); ?></td>
+                                                        </tr>
+                                                    <?php endforeach; ?>
+                                                </tbody>
+                                            </table>
+                                        <?php else: ?>
+                                            <p class="text-muted mb-0">No upcoming vaccinations scheduled.</p>
+                                        <?php endif; ?>
+                                    </div>
+                                </div>
+                                <div class="col-lg-6">
+                                    <div class="table-responsive table-modern panel-recent">
+                                        <h5 class="section-heading"><i class="bi bi-activity"></i>Recent Vaccinations</h5>
+                                        <?php if (!empty($parentRecentVaccinations)): ?>
+                                            <table class="table table-hover align-middle">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Child</th>
+                                                        <th>Vaccine</th>
+                                                        <th>Date</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <?php foreach ($parentRecentVaccinations as $record): ?>
+                                                        <tr>
+                                                            <td><?php echo htmlspecialchars($record['infant_name']); ?></td>
+                                                            <td><?php echo htmlspecialchars($record['vaccine_name']); ?></td>
+                                                            <td><?php echo htmlspecialchars($record['date_vaccination']); ?></td>
+                                                        </tr>
+                                                    <?php endforeach; ?>
+                                                </tbody>
+                                            </table>
+                                        <?php else: ?>
+                                            <p class="text-muted mb-0">No completed vaccinations recorded yet.</p>
+                                        <?php endif; ?>
+                                    </div>
+                                </div>
+                            </div>
                         <?php else: ?>
-                            <p class="text-muted mb-0">No upcoming appointments scheduled.</p>
+                            <p class="text-muted mb-0">No parent profile is linked to this account yet.</p>
                         <?php endif; ?>
                     </div>
                 </div>
-            </div>
-        <?php else: ?>
-            <div class="card card-shadow">
-                <div class="card-header bg-white border-0 py-3">
-                    <h3 class="dashboard-title text-primary"><i class="bi bi-house-heart"></i>Parent Dashboard</h3>
-                </div>
-                <div class="card-body">
-                    <?php if ($parentDataLoaded): ?>
-                        <div class="row g-3 mb-4">
-                            <div class="col-md-4">
-                                <div class="summary-card summary-infants">
-                                    <div class="summary-icon"><i class="bi bi-people"></i></div>
-                                    <div>
-                                        <p class="summary-label">Children Registered</p>
-                                        <h4 class="summary-value"><?php echo $parentChildrenCount; ?></h4>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="summary-card summary-pending">
-                                    <div class="summary-icon"><i class="bi bi-hourglass-split"></i></div>
-                                    <div>
-                                        <p class="summary-label">Pending Vaccinations</p>
-                                        <h4 class="summary-value"><?php echo $parentPendingCount; ?></h4>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="summary-card summary-completed">
-                                    <div class="summary-icon"><i class="bi bi-shield-check"></i></div>
-                                    <div>
-                                        <p class="summary-label">Completed Vaccinations</p>
-                                        <h4 class="summary-value"><?php echo $parentCompletedCount; ?></h4>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="row g-4">
-                            <div class="col-lg-6">
-                                <div class="table-responsive table-modern panel-upcoming">
-                                    <h5 class="section-heading"><i class="bi bi-calendar-check"></i>Upcoming Vaccinations</h5>
-                                    <?php if (!empty($parentUpcomingAppointments)): ?>
-                                        <table class="table table-hover align-middle">
-                                            <thead>
-                                                <tr>
-                                                    <th>Child</th>
-                                                    <th>Vaccine</th>
-                                                    <th>Date</th>
-                                                    <th>Time</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                <?php foreach ($parentUpcomingAppointments as $appointment): ?>
-                                                    <?php
-                                                    $dateDisplay = htmlspecialchars($appointment['date_vaccination']);
-                                                    $timeDisplay = $appointment['time'] ? date('g:i A', strtotime($appointment['time'])) : 'N/A';
-                                                    ?>
-                                                    <tr>
-                                                        <td><?php echo htmlspecialchars($appointment['infant_name']); ?></td>
-                                                        <td><?php echo htmlspecialchars($appointment['vaccine_name']); ?></td>
-                                                        <td><?php echo $dateDisplay; ?></td>
-                                                        <td><?php echo htmlspecialchars($timeDisplay); ?></td>
-                                                    </tr>
-                                                <?php endforeach; ?>
-                                            </tbody>
-                                        </table>
-                                    <?php else: ?>
-                                        <p class="text-muted mb-0">No upcoming vaccinations scheduled.</p>
-                                    <?php endif; ?>
-                                </div>
-                            </div>
-                            <div class="col-lg-6">
-                                <div class="table-responsive table-modern panel-recent">
-                                    <h5 class="section-heading"><i class="bi bi-activity"></i>Recent Vaccinations</h5>
-                                    <?php if (!empty($parentRecentVaccinations)): ?>
-                                        <table class="table table-hover align-middle">
-                                            <thead>
-                                                <tr>
-                                                    <th>Child</th>
-                                                    <th>Vaccine</th>
-                                                    <th>Date</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                <?php foreach ($parentRecentVaccinations as $record): ?>
-                                                    <tr>
-                                                        <td><?php echo htmlspecialchars($record['infant_name']); ?></td>
-                                                        <td><?php echo htmlspecialchars($record['vaccine_name']); ?></td>
-                                                        <td><?php echo htmlspecialchars($record['date_vaccination']); ?></td>
-                                                    </tr>
-                                                <?php endforeach; ?>
-                                            </tbody>
-                                        </table>
-                                    <?php else: ?>
-                                        <p class="text-muted mb-0">No completed vaccinations recorded yet.</p>
-                                    <?php endif; ?>
-                                </div>
-                            </div>
-                        </div>
-                    <?php else: ?>
-                        <p class="text-muted mb-0">No parent profile is linked to this account yet.</p>
-                    <?php endif; ?>
-                </div>
-            </div>
-        <?php endif; ?>
+            <?php endif; ?>
 
-        <?php if ($role === 'admin'): ?>
-            <div class="modal fade" id="registerHealthWorkerModal" tabindex="-1" aria-labelledby="registerHealthWorkerModalLabel" aria-hidden="true">
-                <div class="modal-dialog modal-lg">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title" id="registerHealthWorkerModalLabel">Register Health Worker</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                        </div>
-                        <div class="modal-body">
-                            <form method="POST" action="">
-                                <div class="row g-3">
-                                    <div class="col-md-4">
-                                        <label for="firstname" class="form-label">First Name</label>
-                                        <input type="text" class="form-control" id="firstname" name="firstname" required>
+            <?php if ($role === 'admin'): ?>
+                <div class="modal fade" id="registerHealthWorkerModal" tabindex="-1" aria-labelledby="registerHealthWorkerModalLabel" aria-hidden="true">
+                    <div class="modal-dialog modal-lg">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="registerHealthWorkerModalLabel">Register Health Worker</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <form method="POST" action="">
+                                    <div class="row g-3">
+                                        <div class="col-md-4">
+                                            <label for="firstname" class="form-label">First Name</label>
+                                            <input type="text" class="form-control" id="firstname" name="firstname" required>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label for="middlename" class="form-label">Middle Name</label>
+                                            <input type="text" class="form-control" id="middlename" name="middlename">
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label for="lastname" class="form-label">Last Name</label>
+                                            <input type="text" class="form-control" id="lastname" name="lastname" required>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label for="email" class="form-label">Email</label>
+                                            <input type="email" class="form-control" id="email" name="email" required>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label for="contact_number" class="form-label">Contact Number</label>
+                                            <input type="text" class="form-control" id="contact_number" name="contact_number" required>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label for="gender" class="form-label">Gender</label>
+                                            <select class="form-select" id="gender" name="gender" required>
+                                                <option value="" selected disabled>Select gender</option>
+                                                <option value="Male">Male</option>
+                                                <option value="Female">Female</option>
+                                                <option value="Other">Other</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label for="barangay_assigned" class="form-label">Barangay Assigned</label>
+                                            <select class="form-select" id="barangay_assigned" name="barangay_assigned" required>
+                                                <option value="" selected disabled>Select barangay</option>
+                                                <?php foreach (($barangays ?? []) as $barangay): ?>
+                                                    <option value="<?php echo htmlspecialchars($barangay); ?>"><?php echo htmlspecialchars($barangay); ?></option>
+                                                <?php endforeach; ?>
+                                            </select>
+                                        </div>
+                                        <div class="col-12">
+                                            <label for="address" class="form-label">Address</label>
+                                            <textarea class="form-control" id="address" name="address" rows="2" placeholder="Street / Sitio, Barangay, Municipality" required></textarea>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label for="license_number" class="form-label">License Number</label>
+                                            <input type="text" class="form-control" id="license_number" name="license_number">
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label for="position" class="form-label">Position</label>
+                                            <input type="text" class="form-control" id="position" name="position">
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label for="password" class="form-label">Password</label>
+                                            <input type="password" class="form-control" id="password" name="password" required>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label for="confirm_password" class="form-label">Confirm Password</label>
+                                            <input type="password" class="form-control" id="confirm_password" name="confirm_password" required>
+                                        </div>
                                     </div>
-                                    <div class="col-md-4">
-                                        <label for="middlename" class="form-label">Middle Name</label>
-                                        <input type="text" class="form-control" id="middlename" name="middlename">
+                                    <div class="mt-3 text-end">
+                                        <button type="submit" name="register_healthworker" class="btn btn-success">Register</button>
                                     </div>
-                                    <div class="col-md-4">
-                                        <label for="lastname" class="form-label">Last Name</label>
-                                        <input type="text" class="form-control" id="lastname" name="lastname" required>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label for="email" class="form-label">Email</label>
-                                        <input type="email" class="form-control" id="email" name="email" required>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label for="contact_number" class="form-label">Contact Number</label>
-                                        <input type="text" class="form-control" id="contact_number" name="contact_number" required>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label for="gender" class="form-label">Gender</label>
-                                        <select class="form-select" id="gender" name="gender" required>
-                                            <option value="" selected disabled>Select gender</option>
-                                            <option value="Male">Male</option>
-                                            <option value="Female">Female</option>
-                                            <option value="Other">Other</option>
-                                        </select>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label for="barangay_assigned" class="form-label">Barangay Assigned</label>
-                                        <select class="form-select" id="barangay_assigned" name="barangay_assigned" required>
-                                            <option value="" selected disabled>Select barangay</option>
-                                            <?php foreach (($barangays ?? []) as $barangay): ?>
-                                                <option value="<?php echo htmlspecialchars($barangay); ?>"><?php echo htmlspecialchars($barangay); ?></option>
-                                            <?php endforeach; ?>
-                                        </select>
-                                    </div>
-                                    <div class="col-12">
-                                        <label for="address" class="form-label">Address</label>
-                                        <textarea class="form-control" id="address" name="address" rows="2" placeholder="Street / Sitio, Barangay, Municipality" required></textarea>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label for="license_number" class="form-label">License Number</label>
-                                        <input type="text" class="form-control" id="license_number" name="license_number">
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label for="position" class="form-label">Position</label>
-                                        <input type="text" class="form-control" id="position" name="position">
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label for="password" class="form-label">Password</label>
-                                        <input type="password" class="form-control" id="password" name="password" required>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label for="confirm_password" class="form-label">Confirm Password</label>
-                                        <input type="password" class="form-control" id="confirm_password" name="confirm_password" required>
-                                    </div>
-                                </div>
-                                <div class="mt-3 text-end">
-                                    <button type="submit" name="register_healthworker" class="btn btn-success">Register</button>
-                                </div>
-                            </form>
+                                </form>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <div class="modal fade" id="manageUsersModal" tabindex="-1" aria-labelledby="manageUsersModalLabel" aria-hidden="true">
-                <div class="modal-dialog modal-lg">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title" id="manageUsersModalLabel">Manage Users</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                        </div>
-                        <div class="modal-body">
-                            <table class="table table-bordered">
-                                <thead>
-                                    <tr>
-                                        <th>ID</th>
-                                        <th>Email</th>
-                                        <th>Role</th>
-                                        <th>Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <?php while ($user = mysqli_fetch_assoc($userResult)) { ?>
+                <div class="modal fade" id="manageUsersModal" tabindex="-1" aria-labelledby="manageUsersModalLabel" aria-hidden="true">
+                    <div class="modal-dialog modal-lg">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="manageUsersModalLabel">Manage Users</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <table class="table table-bordered">
+                                    <thead>
                                         <tr>
-                                            <td><?php echo $user['id']; ?></td>
-                                            <td><?php echo $user['email']; ?></td>
-                                            <td><?php echo $user['role']; ?></td>
-                                            <td>
-                                                <button class="btn btn-danger btn-sm" onclick="return confirmDelete(<?php echo $user['id']; ?>)">Delete</button>
-                                            </td>
+                                            <th>ID</th>
+                                            <th>Email</th>
+                                            <th>Role</th>
+                                            <th>Actions</th>
                                         </tr>
-                                    <?php } ?>
-                                </tbody>
-                            </table>
+                                    </thead>
+                                    <tbody>
+                                        <?php while ($user = mysqli_fetch_assoc($userResult)) { ?>
+                                            <tr>
+                                                <td><?php echo $user['id']; ?></td>
+                                                <td><?php echo $user['email']; ?></td>
+                                                <td><?php echo $user['role']; ?></td>
+                                                <td>
+                                                    <button class="btn btn-danger btn-sm" onclick="return confirmDelete(<?php echo $user['id']; ?>)">Delete</button>
+                                                </td>
+                                            </tr>
+                                        <?php } ?>
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
-        <?php endif; ?>
+            <?php endif; ?>
         </div>
     </div>
 

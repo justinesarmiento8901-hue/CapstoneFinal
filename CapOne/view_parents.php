@@ -137,7 +137,7 @@ if (isset($_POST['update_submit'])) {
             <a href="view_parents.php" class="active"><i class="bi bi-people"></i> Parent Records</a>
         <?php endif; ?>
         <a href="viewinfant.php"><i class="bi bi-journal-medical"></i> Infant Records</a>
-        <?php if (!$isParent && isset($_SESSION['user']['role']) && $_SESSION['user']['role'] === 'admin'): ?>
+        <?php if ($role === 'admin' || $role === 'healthworker'): ?>
             <a href="update_growth.php"><i class="bi bi-activity"></i> Growth Tracking</a>
         <?php endif; ?>
         <a href="account_settings.php"><i class="bi bi-gear"></i> Account Settings</a>
@@ -147,7 +147,9 @@ if (isset($_POST['update_submit'])) {
                 <a href="generate_report.php"><i class="bi bi-clipboard-data"></i> Reports</a>
             <?php endif; ?>
             <a href="sms.php"><i class="bi bi-chat-dots"></i> SMS Management</a>
-            <a href="login_logs.php"><i class="bi bi-clipboard-data"></i> Logs</a>
+            <?php if ($role === 'admin'): ?>
+                <a href="login_logs.php"><i class="bi bi-clipboard-data"></i> Logs</a>
+            <?php endif; ?>
         <?php endif; ?>
         <a href="logout.php"><i class="bi bi-box-arrow-right"></i> Logout</a>
     </div>
@@ -174,28 +176,28 @@ if (isset($_POST['update_submit'])) {
                     <div class="table-modern table-modern-elevated">
                         <div class="table-responsive">
                             <table class="table table-hover align-middle mb-0">
-                            <thead>
-                            <tr>
-                                <th scope="col">#</th>
-                                <th scope="col">Full Name</th>
-                                <th scope="col">Phone Number</th>
-                                <th scope="col">Barangay</th>
-                                <th scope="col">Address</th>
-                                <th scope="col">Infant IDs</th>
-                                <th scope="col">Infant Names</th>
-                                <?php if (!$isParent): ?>
-                                    <th scope="col">Action</th>
-                                <?php endif; ?>
-                            </tr>
-                            </thead>
-                            <tbody>
-                            <?php
-                            $search = (!$isParent && isset($_GET['search'])) ? mysqli_real_escape_string($con, $_GET['search']) : '';
+                                <thead>
+                                    <tr>
+                                        <th scope="col">#</th>
+                                        <th scope="col">Full Name</th>
+                                        <th scope="col">Phone Number</th>
+                                        <th scope="col">Barangay</th>
+                                        <th scope="col">Address</th>
+                                        <th scope="col">Infant IDs</th>
+                                        <th scope="col">Infant Names</th>
+                                        <?php if (!$isParent): ?>
+                                            <th scope="col">Action</th>
+                                        <?php endif; ?>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php
+                                    $search = (!$isParent && isset($_GET['search'])) ? mysqli_real_escape_string($con, $_GET['search']) : '';
 
-                            if ($isParent && $parentEmail) {
-                                // Parents can only view their own record (with optional search across their own fields)
-                                if (!empty($search)) {
-                                    $sql = "SELECT parents.*, 
+                                    if ($isParent && $parentEmail) {
+                                        // Parents can only view their own record (with optional search across their own fields)
+                                        if (!empty($search)) {
+                                            $sql = "SELECT parents.*, 
                                                GROUP_CONCAT(infantinfo.id SEPARATOR ', ') AS infant_ids, 
                                                GROUP_CONCAT(infantinfo.firstname SEPARATOR ', ') AS infant_names
                                             FROM parents
@@ -206,18 +208,18 @@ if (isset($_POST['update_submit'])) {
                                                 parents.last_name LIKE '%$search%' OR 
                                                 parents.email LIKE '%$search%')
                                             GROUP BY parents.id";
-                                } else {
-                                    $sql = "SELECT parents.*, 
+                                        } else {
+                                            $sql = "SELECT parents.*, 
                                                GROUP_CONCAT(infantinfo.id SEPARATOR ', ') AS infant_ids, 
                                                GROUP_CONCAT(infantinfo.firstname SEPARATOR ', ') AS infant_names
                                             FROM parents
                                             LEFT JOIN infantinfo ON parents.id = infantinfo.parent_id
                                             WHERE parents.email = '$parentEmail'
                                             GROUP BY parents.id";
-                                }
-                            } else {
-                                if (!empty($search)) {
-                                    $sql = "SELECT parents.*, 
+                                        }
+                                    } else {
+                                        if (!empty($search)) {
+                                            $sql = "SELECT parents.*, 
                                                GROUP_CONCAT(infantinfo.id SEPARATOR ', ') AS infant_ids, 
                                                GROUP_CONCAT(infantinfo.firstname SEPARATOR ', ') AS infant_names
                                             FROM parents
@@ -228,89 +230,89 @@ if (isset($_POST['update_submit'])) {
                                                 parents.last_name LIKE '%$search%' OR 
                                                 parents.email LIKE '%$search%'
                                             GROUP BY parents.id";
-                                } else {
-                                    $sql = "SELECT parents.*, 
+                                        } else {
+                                            $sql = "SELECT parents.*, 
                                                GROUP_CONCAT(infantinfo.id SEPARATOR ', ') AS infant_ids, 
                                                GROUP_CONCAT(infantinfo.firstname SEPARATOR ', ') AS infant_names
                                             FROM parents
                                             LEFT JOIN infantinfo ON parents.id = infantinfo.parent_id
                                             GROUP BY parents.id";
-                                }
-                            }
+                                        }
+                                    }
 
-                            $result = mysqli_query($con, $sql);
-                            if ($result) {
-                                while ($row = mysqli_fetch_assoc($result)) {
-                                    $id = $row['id']; // Corrected column name from 'parent_id' to 'id'
-                                    $first_name = $row['first_name'];
-                                    $last_name = $row['last_name'];
-                                    $fullName = trim(preg_replace('/\s+/', ' ', $first_name . ' ' . $last_name));
-                                    $phone = $row['phone'];
-                                    $barangay = $row['barangay'];
-                                    $address = $row['address']; ?>
+                                    $result = mysqli_query($con, $sql);
+                                    if ($result) {
+                                        while ($row = mysqli_fetch_assoc($result)) {
+                                            $id = $row['id']; // Corrected column name from 'parent_id' to 'id'
+                                            $first_name = $row['first_name'];
+                                            $last_name = $row['last_name'];
+                                            $fullName = trim(preg_replace('/\s+/', ' ', $first_name . ' ' . $last_name));
+                                            $phone = $row['phone'];
+                                            $barangay = $row['barangay'];
+                                            $address = $row['address']; ?>
 
-                                    <tr>
-                                        <th scope="row"><?php echo $id; ?></th>
-                                        <td><?php echo $fullName; ?></td>
-                                        <td><?php echo $phone; ?></td>
-                                        <td><?php echo $barangay; ?></td>
-                                        <td><?php echo $address; ?></td>
-                                        <td><?php echo $row['infant_ids'] ?: 'N/A'; ?></td> <!-- Display concatenated Infant IDs -->
-                                        <td><?php echo $row['infant_names'] ?: 'N/A'; ?></td> <!-- Display concatenated Infant Names -->
-                                        <?php if (!$isParent): ?>
-                                            <td class="d-flex gap-1 justify-content-center action-icons">
-                                                <button class="btn btn-outline-success btn-sm" onclick="confirmEdit(<?php echo $id; ?>)" title="Edit"><i class="bi bi-pencil-square"></i></button>
-                                                <?php if ($showDeleteButton): ?>
-                                                    <button class="btn btn-outline-danger btn-sm" onclick="confirmDelete(<?php echo $id; ?>)" title="Delete"><i class="bi bi-trash"></i></button>
+                                            <tr>
+                                                <th scope="row"><?php echo $id; ?></th>
+                                                <td><?php echo $fullName; ?></td>
+                                                <td><?php echo $phone; ?></td>
+                                                <td><?php echo $barangay; ?></td>
+                                                <td><?php echo $address; ?></td>
+                                                <td><?php echo $row['infant_ids'] ?: 'N/A'; ?></td> <!-- Display concatenated Infant IDs -->
+                                                <td><?php echo $row['infant_names'] ?: 'N/A'; ?></td> <!-- Display concatenated Infant Names -->
+                                                <?php if (!$isParent): ?>
+                                                    <td class="d-flex gap-1 justify-content-center action-icons">
+                                                        <button class="btn btn-outline-success btn-sm" onclick="confirmEdit(<?php echo $id; ?>)" title="Edit"><i class="bi bi-pencil-square"></i></button>
+                                                        <?php if ($showDeleteButton): ?>
+                                                            <button class="btn btn-outline-danger btn-sm" onclick="confirmDelete(<?php echo $id; ?>)" title="Delete"><i class="bi bi-trash"></i></button>
+                                                        <?php endif; ?>
+                                                    </td>
                                                 <?php endif; ?>
-                                            </td>
-                                        <?php endif; ?>
-                                    </tr>
+                                            </tr>
 
-                                    <!-- Modal for EDIT -->
-                                    <div class="modal fade" id="formModal_<?php echo $id; ?>" tabindex="-1" aria-labelledby="formModalLabel" aria-hidden="true">
-                                        <div class="modal-dialog">
-                                            <div class="modal-content">
-                                                <div class="modal-header">
-                                                    <h5 class="modal-title text-primary" id="formModalLabel">Edit Parent Information</h5>
-                                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                                </div>
-                                                <div class="modal-body">
-                                                    <form method="POST" action="view_parents.php">
-                                                        <input type="hidden" name="update_id" value="<?php echo $id; ?>">
-                                                        <div class="mb-3">
-                                                            <label for="first_name" class="form-label">First Name</label>
-                                                            <input type="text" class="form-control" name="update_first_name" value="<?php echo $first_name; ?>" required>
+                                            <!-- Modal for EDIT -->
+                                            <div class="modal fade" id="formModal_<?php echo $id; ?>" tabindex="-1" aria-labelledby="formModalLabel" aria-hidden="true">
+                                                <div class="modal-dialog">
+                                                    <div class="modal-content">
+                                                        <div class="modal-header">
+                                                            <h5 class="modal-title text-primary" id="formModalLabel">Edit Parent Information</h5>
+                                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                                                         </div>
-                                                        <div class="mb-3">
-                                                            <label for="last_name" class="form-label">Last Name</label>
-                                                            <input type="text" class="form-control" name="update_last_name" value="<?php echo $last_name; ?>" required>
+                                                        <div class="modal-body">
+                                                            <form method="POST" action="view_parents.php">
+                                                                <input type="hidden" name="update_id" value="<?php echo $id; ?>">
+                                                                <div class="mb-3">
+                                                                    <label for="first_name" class="form-label">First Name</label>
+                                                                    <input type="text" class="form-control" name="update_first_name" value="<?php echo $first_name; ?>" required>
+                                                                </div>
+                                                                <div class="mb-3">
+                                                                    <label for="last_name" class="form-label">Last Name</label>
+                                                                    <input type="text" class="form-control" name="update_last_name" value="<?php echo $last_name; ?>" required>
+                                                                </div>
+                                                                <div class="mb-3">
+                                                                    <label for="phone_number" class="form-label">Phone Number</label>
+                                                                    <input type="text" class="form-control" name="update_phone_number" value="<?php echo $phone; ?>">
+                                                                </div>
+                                                                <div class="mb-3">
+                                                                    <label for="barangay" class="form-label">Barangay</label>
+                                                                    <input type="text" class="form-control" name="update_barangay" value="<?php echo $barangay; ?>">
+                                                                </div>
+                                                                <div class="mb-3">
+                                                                    <label for="address" class="form-label">Address</label>
+                                                                    <textarea class="form-control" name="update_address"><?php echo $address; ?></textarea>
+                                                                </div>
+                                                                <div class="text-center">
+                                                                    <button type="submit" name="update_submit" class="btn btn-primary w-50">Submit</button>
+                                                                </div>
+                                                            </form>
                                                         </div>
-                                                        <div class="mb-3">
-                                                            <label for="phone_number" class="form-label">Phone Number</label>
-                                                            <input type="text" class="form-control" name="update_phone_number" value="<?php echo $phone; ?>">
-                                                        </div>
-                                                        <div class="mb-3">
-                                                            <label for="barangay" class="form-label">Barangay</label>
-                                                            <input type="text" class="form-control" name="update_barangay" value="<?php echo $barangay; ?>">
-                                                        </div>
-                                                        <div class="mb-3">
-                                                            <label for="address" class="form-label">Address</label>
-                                                            <textarea class="form-control" name="update_address"><?php echo $address; ?></textarea>
-                                                        </div>
-                                                        <div class="text-center">
-                                                            <button type="submit" name="update_submit" class="btn btn-primary w-50">Submit</button>
-                                                        </div>
-                                                    </form>
+                                                    </div>
                                                 </div>
                                             </div>
-                                        </div>
-                                    </div>
-                            <?php
-                                }
-                            }
-                            ?>
-                            </tbody>
+                                    <?php
+                                        }
+                                    }
+                                    ?>
+                                </tbody>
                             </table>
                         </div>
                     </div>

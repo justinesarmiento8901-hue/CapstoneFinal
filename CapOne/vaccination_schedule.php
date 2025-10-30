@@ -218,7 +218,7 @@ if (is_readable($barangayConfig)) {
             <a href="add_parents.php"><i class="bi bi-person-plus"></i> Add Parent</a>
         <?php endif; ?>
         <a href="viewinfant.php"><i class="bi bi-journal-medical"></i> Infant Records</a>
-        <?php if ($role === 'admin'): ?>
+        <?php if ($role === 'admin' || $role === 'healthworker'): ?>
             <a href="update_growth.php"><i class="bi bi-activity"></i> Growth Tracking</a>
         <?php endif; ?>
         <a href="view_parents.php"><i class="bi bi-people"></i> Parent Records</a>
@@ -229,7 +229,9 @@ if (is_readable($barangayConfig)) {
                 <a href="generate_report.php"><i class="bi bi-clipboard-data"></i> Reports</a>
             <?php endif; ?>
             <a href="sms.php"><i class="bi bi-chat-dots"></i> SMS Management</a>
-            <a href="login_logs.php"><i class="bi bi-clipboard-data"></i> Logs</a>
+            <?php if ($role === 'admin'): ?>
+                <a href="login_logs.php"><i class="bi bi-clipboard-data"></i> Logs</a>
+            <?php endif; ?>
         <?php endif; ?>
         <a href="logout.php"><i class="bi bi-box-arrow-right"></i> Logout</a>
     </div>
@@ -682,7 +684,9 @@ if (is_readable($barangayConfig)) {
                             $('#infantSearchWrapper').addClass('d-none');
                             $('#modalsearch_infant').prop('required', false).prop('readonly', true).val('');
                             if (d.infant_id) {
-                                $.getJSON('get_parent_phone.php', { infant_id: d.infant_id }, function(resp) {
+                                $.getJSON('get_parent_phone.php', {
+                                    infant_id: d.infant_id
+                                }, function(resp) {
                                     if (resp && resp.phone) {
                                         $('#parent_phone').val(resp.phone);
                                         $('#parent_phone_display').val(resp.phone);
@@ -954,9 +958,7 @@ if (is_readable($barangayConfig)) {
 
             // Clickable infant name => go to details page
             $(document).on('click', '.infantLink', function(e) {
-                e.preventDefault();
-                var id = $(this).data('id');
-                // open details in new tab
+                e.prevent
                 window.open('vaccination_details.php?infant_id=' + id, '_blank');
             });
         });

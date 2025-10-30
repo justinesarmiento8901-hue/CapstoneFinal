@@ -128,7 +128,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <?php endif; ?>
         <a href="viewinfant.php"><i class="bi bi-journal-medical"></i> Infant Records</a>
         <a href="view_parents.php"><i class="bi bi-people"></i> Parent Records</a>
-        <?php if ($role === 'admin'): ?>
+        <?php if ($role === 'admin' || $role === 'healthworker'): ?>
             <a href="update_growth.php"><i class="bi bi-activity"></i> Growth Tracking</a>
         <?php endif; ?>
         <a href="account_settings.php" class="active"><i class="bi bi-gear"></i> Account Settings</a>
@@ -138,7 +138,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <a href="generate_report.php"><i class="bi bi-clipboard-data"></i> Reports</a>
             <?php endif; ?>
             <a href="sms.php"><i class="bi bi-chat-dots"></i> SMS Management</a>
-            <a href="login_logs.php"><i class="bi bi-clipboard-data"></i> Logs</a>
+            <?php if ($role === 'admin'): ?>
+                <a href="login_logs.php"><i class="bi bi-clipboard-data"></i> Logs</a>
+            <?php endif; ?>
         <?php endif; ?>
         <a href="logout.php"><i class="bi bi-box-arrow-right"></i> Logout</a>
     </div>
@@ -150,24 +152,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <div class="card card-shadow p-4 p-md-5">
                         <h3 class="mb-3">Account Settings</h3>
                         <form method="POST" autocomplete="off">
-                    <div class="mb-3">
-                        <label class="form-label">Current Password</label>
-                        <input type="password" class="form-control" name="current_password" required>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">New Email</label>
-                        <input type="email" class="form-control" name="new_email" placeholder="<?php echo htmlspecialchars($currentUserEmail); ?>">
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">New Password</label>
-                            <input type="password" class="form-control" name="new_password" placeholder="Leave blank to keep current">
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">Confirm New Password</label>
-                            <input type="password" class="form-control" name="confirm_password" placeholder="Leave blank to keep current">
-                        </div>
-                    </div>
+                            <div class="mb-3">
+                                <label class="form-label">Current Password</label>
+                                <input type="password" class="form-control" name="current_password" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">New Email</label>
+                                <input type="email" class="form-control" name="new_email" placeholder="<?php echo htmlspecialchars($currentUserEmail); ?>">
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">New Password</label>
+                                    <input type="password" class="form-control" name="new_password" placeholder="Leave blank to keep current">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Confirm New Password</label>
+                                    <input type="password" class="form-control" name="confirm_password" placeholder="Leave blank to keep current">
+                                </div>
+                            </div>
                             <div class="d-flex gap-2">
                                 <button type="submit" class="btn btn-primary">Save Changes</button>
                                 <a href="dashboard.php" class="btn btn-secondary">Back</a>

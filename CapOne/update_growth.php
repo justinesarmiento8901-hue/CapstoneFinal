@@ -31,7 +31,7 @@ function normalizeSex(?string $sex): ?string
     return null;
 }
 
-if (!isset($_SESSION['user']) || $role !== 'admin') {
+if (!isset($_SESSION['user']) || !in_array($role, ['admin', 'healthworker'], true)) {
     header('Location: dashboard.php');
     exit;
 }
@@ -355,7 +355,7 @@ function computeAgeInMonths(?string $dateOfBirth): ?int
         <?php endif; ?>
         <a href="view_parents.php"><i class="bi bi-people"></i> Parent Records</a>
         <a href="viewinfant.php"><i class="bi bi-journal-medical"></i> Infant Records</a>
-        <?php if ($role === 'admin'): ?>
+        <?php if ($role === 'admin' || $role === 'healthworker'): ?>
             <a href="update_growth.php" class="active"><i class="bi bi-activity"></i> Growth Tracking</a>
         <?php endif; ?>
         <a href="account_settings.php"><i class="bi bi-gear"></i> Account Settings</a>
@@ -365,126 +365,127 @@ function computeAgeInMonths(?string $dateOfBirth): ?int
                 <a href="generate_report.php"><i class="bi bi-clipboard-data"></i> Reports</a>
             <?php endif; ?>
             <a href="sms.php"><i class="bi bi-chat-dots"></i> SMS Management</a>
-            <a href="login_logs.php"><i class="bi bi-clipboard-data"></i> Logs</a>
+            <?php if ($role === 'admin'): ?>
+                <a href="login_logs.php"><i class="bi bi-clipboard-data"></i> Logs</a>
+            <?php endif; ?>
         <?php endif; ?>
         <a href="logout.php"><i class="bi bi-box-arrow-right"></i> Logout</a>
     </div>
 
     <div class="content-area">
-            <div class="container-fluid mt-4">
-                <div class="card card-shadow">
-                    <div class="card-header bg-white border-0 py-3">
-                        <h3 class="dashboard-title"><i class="bi bi-activity"></i> Growth Tracking</h3>
-                    </div>
-                    <div class="card-body">
-                        <div class="row g-2 mb-3">
-                            <div class="col-12 col-md-5 col-lg-4 ms-auto">
-                                <div class="input-group">
-                                    <span class="input-group-text"><i class="bi bi-search"></i></span>
-                                    <input type="search" class="form-control" id="infantSearchInput" placeholder="Search infant name..." aria-label="Search infant name">
-                                </div>
+        <div class="container-fluid mt-4">
+            <div class="card card-shadow">
+                <div class="card-header bg-white border-0 py-3">
+                    <h3 class="dashboard-title"><i class="bi bi-activity"></i> Growth Tracking</h3>
+                </div>
+                <div class="card-body">
+                    <div class="row g-2 mb-3">
+                        <div class="col-12 col-md-5 col-lg-4 ms-auto">
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-search"></i></span>
+                                <input type="search" class="form-control" id="infantSearchInput" placeholder="Search infant name..." aria-label="Search infant name">
                             </div>
                         </div>
-                        <div class="table-modern table-modern-elevated">
-                            <div class="table-responsive">
-                                <table class="table table-hover align-middle mb-0" id="growthTable">
-                                    <thead>
+                    </div>
+                    <div class="table-modern table-modern-elevated">
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0" id="growthTable">
+                                <thead>
+                                    <tr>
+                                        <th scope="col">ID</th>
+                                        <th scope="col">Infant Name</th>
+                                        <th scope="col">Sex</th>
+                                        <th scope="col">Previous Weight (kg)</th>
+                                        <th scope="col">Previous Height (cm)</th>
+                                        <th scope="col">Current Weight (kg)</th>
+                                        <th scope="col">Current Height (cm)</th>
+                                        <th scope="col">Status</th>
+                                        <th scope="col">Remarks</th>
+                                        <th scope="col" class="text-center">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="growthTableBody">
+                                    <?php if (empty($infants)): ?>
                                         <tr>
-                                            <th scope="col">ID</th>
-                                            <th scope="col">Infant Name</th>
-                                            <th scope="col">Sex</th>
-                                            <th scope="col">Previous Weight (kg)</th>
-                                            <th scope="col">Previous Height (cm)</th>
-                                            <th scope="col">Current Weight (kg)</th>
-                                            <th scope="col">Current Height (cm)</th>
-                                            <th scope="col">Status</th>
-                                            <th scope="col">Remarks</th>
-                                            <th scope="col" class="text-center">Action</th>
+                                            <td colspan="10" class="text-center text-muted">No infant records found.</td>
                                         </tr>
-                                    </thead>
-                                    <tbody id="growthTableBody">
-                                        <?php if (empty($infants)): ?>
-                                            <tr>
-                                                <td colspan="10" class="text-center text-muted">No infant records found.</td>
+                                    <?php else: ?>
+                                        <?php foreach ($infants as $infant): ?>
+                                            <?php
+                                            $infantId = (int) $infant['id'];
+                                            $fullName = trim(preg_replace('/\s+/', ' ', $infant['firstname'] . ' ' . ($infant['middlename'] ?? '') . ' ' . $infant['surname']));
+                                            $prevWeightFormatted = formatMeasurement($infant['previous_weight']);
+                                            $prevHeightFormatted = formatMeasurement($infant['previous_height']);
+                                            $currentWeightFormatted = formatMeasurement($infant['current_weight']);
+                                            $currentHeightFormatted = formatMeasurement($infant['current_height']);
+                                            $remarksText = $infant['remarks'] ?? '';
+                                            $statusLabel = computeStatus($infant['growth_status'] ?? '', $infant['previous_weight'], $infant['previous_height'], $infant['current_weight'], $infant['current_height']);
+
+                                            $sexNormalizedRow = normalizeSex($infant['sex'] ?? null);
+                                            $sexDisplay = $sexNormalizedRow ?? (trim((string) ($infant['sex'] ?? '')) !== '' ? ucfirst(strtolower((string) $infant['sex'])) : '--');
+
+                                            $ageInMonthsDisplay = computeAgeInMonths($infant['dateofbirth'] ?? null);
+                                            $referenceForDisplay = null;
+                                            if ($ageInMonthsDisplay !== null) {
+                                                $referenceForDisplay = fetchGrowthReference($ageInMonthsDisplay, $con, $sexNormalizedRow);
+                                            }
+
+                                            $weightMinDisplay = $referenceForDisplay ? number_format((float) $referenceForDisplay['weight_min'], 1) : '--';
+                                            $weightMaxDisplay = $referenceForDisplay ? number_format((float) $referenceForDisplay['weight_max'], 1) : '--';
+                                            $heightMinDisplay = $referenceForDisplay ? number_format((float) $referenceForDisplay['height_min'], 1) : '--';
+                                            $heightMaxDisplay = $referenceForDisplay ? number_format((float) $referenceForDisplay['height_max'], 1) : '--';
+
+                                            $weightMinAttr = $referenceForDisplay ? number_format((float) $referenceForDisplay['weight_min'], 1) : '';
+                                            $weightMaxAttr = $referenceForDisplay ? number_format((float) $referenceForDisplay['weight_max'], 1) : '';
+                                            $heightMinAttr = $referenceForDisplay ? number_format((float) $referenceForDisplay['height_min'], 1) : '';
+                                            $heightMaxAttr = $referenceForDisplay ? number_format((float) $referenceForDisplay['height_max'], 1) : '';
+                                            ?>
+                                            <tr data-infant-id="<?php echo $infantId; ?>">
+                                                <td><?php echo $infantId; ?></td>
+                                                <td><?php echo htmlspecialchars($fullName, ENT_QUOTES, 'UTF-8'); ?></td>
+                                                <td data-column="sex"><?php echo htmlspecialchars($sexDisplay, ENT_QUOTES, 'UTF-8'); ?></td>
+                                                <td data-column="previous-weight"><?php echo $prevWeightFormatted; ?></td>
+                                                <td data-column="previous-height"><?php echo $prevHeightFormatted; ?></td>
+                                                <td data-column="current-weight"><?php echo $currentWeightFormatted; ?></td>
+                                                <td data-column="current-height"><?php echo $currentHeightFormatted; ?></td>
+                                                <td data-column="status"><?php echo htmlspecialchars($statusLabel, ENT_QUOTES, 'UTF-8'); ?></td>
+                                                <td data-column="remarks"><?php echo htmlspecialchars($remarksText !== '' ? $remarksText : '--', ENT_QUOTES, 'UTF-8'); ?></td>
+                                                <td class="text-center">
+                                                    <button
+                                                        type="button"
+                                                        class="btn btn-success btn-sm d-inline-flex align-items-center justify-content-center"
+                                                        data-bs-toggle="modal"
+                                                        data-bs-target="#growthModal"
+                                                        data-infant-id="<?php echo $infantId; ?>"
+                                                        data-infant-name="<?php echo htmlspecialchars($fullName, ENT_QUOTES, 'UTF-8'); ?>"
+                                                        data-sex="<?php echo htmlspecialchars($sexDisplay, ENT_QUOTES, 'UTF-8'); ?>"
+                                                        data-weight-min="<?php echo htmlspecialchars($weightMinAttr, ENT_QUOTES, 'UTF-8'); ?>"
+                                                        data-weight-max="<?php echo htmlspecialchars($weightMaxAttr, ENT_QUOTES, 'UTF-8'); ?>"
+                                                        data-height-min="<?php echo htmlspecialchars($heightMinAttr, ENT_QUOTES, 'UTF-8'); ?>"
+                                                        data-height-max="<?php echo htmlspecialchars($heightMaxAttr, ENT_QUOTES, 'UTF-8'); ?>"
+                                                        data-prev-weight="<?php echo $prevWeightFormatted; ?>"
+                                                        data-prev-height="<?php echo $prevHeightFormatted; ?>"
+                                                        data-current-weight="<?php echo $currentWeightFormatted !== '--' ? $currentWeightFormatted : ''; ?>"
+                                                        data-current-height="<?php echo $currentHeightFormatted !== '--' ? $currentHeightFormatted : ''; ?>"
+                                                        data-remarks="<?php echo htmlspecialchars($remarksText, ENT_QUOTES, 'UTF-8'); ?>"
+                                                        data-status="<?php echo htmlspecialchars($statusLabel, ENT_QUOTES, 'UTF-8'); ?>">
+                                                        <i class="bi bi-pencil-square"></i>
+                                                        <span class="visually-hidden">Edit</span>
+                                                    </button>
+                                                </td>
                                             </tr>
-                                        <?php else: ?>
-                                            <?php foreach ($infants as $infant): ?>
-                                                <?php
-                                                    $infantId = (int) $infant['id'];
-                                                    $fullName = trim(preg_replace('/\s+/', ' ', $infant['firstname'] . ' ' . ($infant['middlename'] ?? '') . ' ' . $infant['surname']));
-                                                    $prevWeightFormatted = formatMeasurement($infant['previous_weight']);
-                                                    $prevHeightFormatted = formatMeasurement($infant['previous_height']);
-                                                    $currentWeightFormatted = formatMeasurement($infant['current_weight']);
-                                                    $currentHeightFormatted = formatMeasurement($infant['current_height']);
-                                                    $remarksText = $infant['remarks'] ?? '';
-                                                    $statusLabel = computeStatus($infant['growth_status'] ?? '', $infant['previous_weight'], $infant['previous_height'], $infant['current_weight'], $infant['current_height']);
-
-                                                    $sexNormalizedRow = normalizeSex($infant['sex'] ?? null);
-                                                    $sexDisplay = $sexNormalizedRow ?? (trim((string) ($infant['sex'] ?? '')) !== '' ? ucfirst(strtolower((string) $infant['sex'])) : '--');
-
-                                                    $ageInMonthsDisplay = computeAgeInMonths($infant['dateofbirth'] ?? null);
-                                                    $referenceForDisplay = null;
-                                                    if ($ageInMonthsDisplay !== null) {
-                                                        $referenceForDisplay = fetchGrowthReference($ageInMonthsDisplay, $con, $sexNormalizedRow);
-                                                    }
-
-                                                    $weightMinDisplay = $referenceForDisplay ? number_format((float) $referenceForDisplay['weight_min'], 1) : '--';
-                                                    $weightMaxDisplay = $referenceForDisplay ? number_format((float) $referenceForDisplay['weight_max'], 1) : '--';
-                                                    $heightMinDisplay = $referenceForDisplay ? number_format((float) $referenceForDisplay['height_min'], 1) : '--';
-                                                    $heightMaxDisplay = $referenceForDisplay ? number_format((float) $referenceForDisplay['height_max'], 1) : '--';
-
-                                                    $weightMinAttr = $referenceForDisplay ? number_format((float) $referenceForDisplay['weight_min'], 1) : '';
-                                                    $weightMaxAttr = $referenceForDisplay ? number_format((float) $referenceForDisplay['weight_max'], 1) : '';
-                                                    $heightMinAttr = $referenceForDisplay ? number_format((float) $referenceForDisplay['height_min'], 1) : '';
-                                                    $heightMaxAttr = $referenceForDisplay ? number_format((float) $referenceForDisplay['height_max'], 1) : '';
-                                                ?>
-                                                <tr data-infant-id="<?php echo $infantId; ?>">
-                                                    <td><?php echo $infantId; ?></td>
-                                                    <td><?php echo htmlspecialchars($fullName, ENT_QUOTES, 'UTF-8'); ?></td>
-                                                    <td data-column="sex"><?php echo htmlspecialchars($sexDisplay, ENT_QUOTES, 'UTF-8'); ?></td>
-                                                    <td data-column="previous-weight"><?php echo $prevWeightFormatted; ?></td>
-                                                    <td data-column="previous-height"><?php echo $prevHeightFormatted; ?></td>
-                                                    <td data-column="current-weight"><?php echo $currentWeightFormatted; ?></td>
-                                                    <td data-column="current-height"><?php echo $currentHeightFormatted; ?></td>
-                                                    <td data-column="status"><?php echo htmlspecialchars($statusLabel, ENT_QUOTES, 'UTF-8'); ?></td>
-                                                    <td data-column="remarks"><?php echo htmlspecialchars($remarksText !== '' ? $remarksText : '--', ENT_QUOTES, 'UTF-8'); ?></td>
-                                                    <td class="text-center">
-                                                        <button
-                                                            type="button"
-                                                            class="btn btn-success btn-sm d-inline-flex align-items-center justify-content-center"
-                                                            data-bs-toggle="modal"
-                                                            data-bs-target="#growthModal"
-                                                            data-infant-id="<?php echo $infantId; ?>"
-                                                            data-infant-name="<?php echo htmlspecialchars($fullName, ENT_QUOTES, 'UTF-8'); ?>"
-                                                            data-sex="<?php echo htmlspecialchars($sexDisplay, ENT_QUOTES, 'UTF-8'); ?>"
-                                                            data-weight-min="<?php echo htmlspecialchars($weightMinAttr, ENT_QUOTES, 'UTF-8'); ?>"
-                                                            data-weight-max="<?php echo htmlspecialchars($weightMaxAttr, ENT_QUOTES, 'UTF-8'); ?>"
-                                                            data-height-min="<?php echo htmlspecialchars($heightMinAttr, ENT_QUOTES, 'UTF-8'); ?>"
-                                                            data-height-max="<?php echo htmlspecialchars($heightMaxAttr, ENT_QUOTES, 'UTF-8'); ?>"
-                                                            data-prev-weight="<?php echo $prevWeightFormatted; ?>"
-                                                            data-prev-height="<?php echo $prevHeightFormatted; ?>"
-                                                            data-current-weight="<?php echo $currentWeightFormatted !== '--' ? $currentWeightFormatted : ''; ?>"
-                                                            data-current-height="<?php echo $currentHeightFormatted !== '--' ? $currentHeightFormatted : ''; ?>"
-                                                            data-remarks="<?php echo htmlspecialchars($remarksText, ENT_QUOTES, 'UTF-8'); ?>"
-                                                            data-status="<?php echo htmlspecialchars($statusLabel, ENT_QUOTES, 'UTF-8'); ?>"
-                                                        >
-                                                            <i class="bi bi-pencil-square"></i>
-                                                            <span class="visually-hidden">Edit</span>
-                                                        </button>
-                                                    </td>
-                                                </tr>
-                                            <?php endforeach; ?>
-                                        <?php endif; ?>
-                                        <tr id="noMatchesRow" class="d-none">
-                                            <td colspan="10" class="text-center text-muted">No matching records found.</td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
+                                        <?php endforeach; ?>
+                                    <?php endif; ?>
+                                    <tr id="noMatchesRow" class="d-none">
+                                        <td colspan="10" class="text-center text-muted">No matching records found.</td>
+                                    </tr>
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div>
             </div>
+        </div>
     </div>
 
     <div class="modal fade" id="growthModal" tabindex="-1" aria-labelledby="growthModalLabel" aria-hidden="true">
@@ -674,9 +675,9 @@ function computeAgeInMonths(?string $dateOfBirth): ?int
             submitBtn.textContent = 'Saving...';
 
             fetch(window.location.href, {
-                method: 'POST',
-                body: formData
-            })
+                    method: 'POST',
+                    body: formData
+                })
                 .then(response => response.json())
                 .then(data => {
                     if (!data.success) {
